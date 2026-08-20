@@ -50,7 +50,7 @@ export async function listPublicAlbums(): Promise<PublicAlbum[]> {
   const { data: albums, error } = await admin
     .from("albums")
     .select(
-      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image(id, s3_key, title)",
+      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image:cover_image_id(id, s3_key, title)",
     )
     .eq("visibility", "public")
     .order("sort_order", { ascending: true })
@@ -96,7 +96,7 @@ export async function getPublicAlbumDetail(id: string): Promise<{
   const { data: albumRow, error } = await admin
     .from("albums")
     .select(
-      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image(id, s3_key, title)",
+      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image:cover_image_id(id, s3_key, title)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -320,7 +320,7 @@ export async function searchPublic(query: string): Promise<PublicSearchResult> {
   const { data: albumRows, error: albumError } = await admin
     .from("albums")
     .select(
-      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image(id, s3_key, title)",
+      "id, name, description, visibility, cover_image_id, view_count, updated_at, cover_image:cover_image_id(id, s3_key, title)",
     )
     .eq("visibility", "public")
     .or(`name.ilike.${like},description.ilike.${like}`)

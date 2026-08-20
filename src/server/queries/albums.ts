@@ -30,7 +30,7 @@ export async function listAlbums(): Promise<AlbumListItem[]> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("albums")
-    .select("*, cover_image(id, s3_key, title), album_images(count)")
+    .select("*, cover_image:cover_image_id(id, s3_key, title), album_images(count)")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
@@ -58,7 +58,7 @@ export async function getAlbumDetail(id: string): Promise<AlbumDetail | null> {
   const { data, error } = await admin
     .from("albums")
     .select(
-      "*, cover_image(id, s3_key, title), album_images(image_id, sort_order, images(id, title, original_name, s3_key, mime, processing_status, taken_at, created_at))",
+      "*, cover_image:cover_image_id(id, s3_key, title), album_images(image_id, sort_order, images(id, title, original_name, s3_key, mime, processing_status, taken_at, created_at))",
     )
     .eq("id", id)
     .maybeSingle();
