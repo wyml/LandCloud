@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { hashAlbumPassword } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface AlbumInput {
@@ -9,33 +10,55 @@ export interface AlbumInput {
   description: string;
   visibility: "public" | "private" | "password";
   sortOrder: number;
+  password?: string;
 }
 
 export async function createAlbum(input: AlbumInput) {
   await requireAdmin();
   const admin = createAdminClient();
-  const { error } = await admin.from("albums").insert({
-    name: input.name.trim(),
-    description: input.description.trim(),
-    visibility: input.visibility,
-    sort_order: input.sortOrder,
-  });
+  const { data, error } = await admin
+    .from("albums")
+    .insert({
+      name: input.name.trim(),
+      description: input.description.trim(),
+      visibility: input.visibility,
+      sort_order: input.sortOrder,
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  if (input.visibility === "password" && input.password && data?.id) {
+    const { error: pwError } = await admin
+      .from("albums")
+      .update({ password_hash: hashAlbumPassword(input.password, data.id) })
+      .eq("id", data.id);
+    if (pwError) throw new Error(pwError.message);
+  }
   refresh();
 }
 
 export async function updateAlbum(id: string, input: AlbumInput) {
   await requireAdmin();
   const admin = createAdminClient();
-  const { error } = await admin
-    .from("albums")
-    .update({
-      name: input.name.trim(),
-      description: input.description.trim(),
-      visibility: input.visibility,
-      sort_order: input.sortOrder,
-    })
-    .eq("id", id);
+  const update: Record<string, unknown> = {
+    name: input.name.trim(),
+    description: input.description.trim(),
+    visibility: input.visibility,
+    sort_order: input.sortOrder,
+  };
+  if (input.visibility === "password") {
+    if (input.password) {
+      update.password_hash = hashAlbumPassword(input.password, id);
+    } else {
+      const { data: current } = await admin
+        .from("albums")
+        .select("password_hash")
+        .eq("id", id)
+        .maybeSingle();
+      update.password_hash = (current?.password_hash as string) ?? "";
+    }
+  }
+  const { error } = await admin.from("albums").update(update).eq("id", id);
   if (error) throw new Error(error.message);
   refresh();
 }

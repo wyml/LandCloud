@@ -50,3 +50,7 @@ export function getS3PublicBase(): string | null {
   const base = process.env.S3_PUBLIC_BASE;
   return base ? base.replace(/\/$/, "") : null;
 }
+
+export function getSessionSecret(): string {
+  return process.env.SESSION_SECRET ?? "dev-insecure-session-secret-do-not-use-in-prod";
+}

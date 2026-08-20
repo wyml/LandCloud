@@ -52,3 +52,36 @@ export interface AlbumOption {
 export interface TagWithCount extends TagRow {
   count: number;
 }
+
+export interface SiteSettings {
+  name: string;
+  logo: string;
+  description: string;
+  footer: string;
+}
+
+export interface PublicImage {
+  id: string;
+  title: string;
+  description: string;
+  original_name: string;
+  mime: string;
+  width: number | null;
+  height: number | null;
+  s3_key: string;
+  taken_at: string | null;
+  view_count: number;
+  gps_lat: number | null;
+  gps_lng: number | null;
+}
+
+export interface PublicAlbum {
+  id: string;
+  name: string;
+  description: string;
+  visibility: AlbumRow["visibility"];
+  imageCount: number;
+  view_count: number;
+  cover: { id: string; s3_key: string; title: string } | null;
+  updated_at: string;
+}

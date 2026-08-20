@@ -27,6 +27,7 @@ interface AlbumFormState {
   description: string;
   visibility: "public" | "private" | "password";
   sortOrder: number;
+  password: string;
 }
 
 const EMPTY_FORM: AlbumFormState = {
@@ -34,6 +35,7 @@ const EMPTY_FORM: AlbumFormState = {
   description: "",
   visibility: "public",
   sortOrder: 0,
+  password: "",
 };
 
 interface AlbumsManagerProps {
@@ -55,6 +57,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
       description: album.description,
       visibility: album.visibility,
       sortOrder: album.sort_order,
+      password: "",
     });
     setError(null);
   }
@@ -120,6 +123,16 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
           placeholder="相册简介"
           className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
         />
+        {form.visibility === "password" && (
+          <input
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            placeholder={editingId ? "新密码（留空则保持原密码）" : "访问密码 *"}
+            required={!editingId}
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          />
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" variant="primary" isDisabled={saving}>

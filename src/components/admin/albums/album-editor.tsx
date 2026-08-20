@@ -39,6 +39,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
   const [description, setDescription] = useState(album.description);
   const [visibility, setVisibility] = useState(album.visibility);
   const [sortOrder, setSortOrder] = useState(album.sort_order);
+  const [password, setPassword] = useState("");
   const [images, setImages] = useState(album.images);
   const [coverId, setCoverId] = useState(album.cover?.id ?? "");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -65,6 +66,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
         description,
         visibility,
         sortOrder,
+        password: visibility === "password" ? password : undefined,
       });
       const coverImageId = coverId || null;
       if (coverImageId !== (album.cover?.id ?? null)) {
@@ -144,6 +146,15 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
           placeholder="相册简介"
           className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
         />
+        {visibility === "password" && (
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="访问密码（留空保持原密码）"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          />
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
