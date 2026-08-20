@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { badRequest, guardAdmin, parseJsonBody } from "@/lib/api";
+import { badRequest, guardUploadAccess, parseJsonBody } from "@/lib/api";
 import { processImage, sha256Hex } from "@/lib/images/processing";
 import { detectMimeByMagic } from "@/lib/images/variants";
 import { deleteObject, getObjectBuffer, objectExists } from "@/lib/s3";
@@ -17,8 +17,8 @@ interface CompleteBody {
 }
 
 export async function POST(request: Request) {
-  const denied = await guardAdmin();
-  if (denied) return denied;
+  const access = await guardUploadAccess(request);
+  if (!access.ok) return access.response;
 
   const body = await parseJsonBody<CompleteBody>(request);
   if (!body || typeof body.key !== "string" || !body.key.startsWith("images/")) {

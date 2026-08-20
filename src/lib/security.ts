@@ -94,6 +94,48 @@ export function verifyShareToken(token: string | undefined): string | null {
 
 export const SHARE_ACCESS_TTL_SECONDS = 60 * 60 * 24;
 
+export const UPLOAD_TOKEN_TTL_MS = 10 * 60 * 1000;
+
+export function signUploadToken(): { token: string; expiresAt: number } {
+  const now = Date.now();
+  const exp = now + UPLOAD_TOKEN_TTL_MS;
+  const payload = Buffer.from(JSON.stringify({ sub: crypto.randomUUID(), iat: now, exp })).toString(
+    "base64url",
+  );
+  const sig = crypto.createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  return { token: `${payload}.${sig}`, expiresAt: exp };
+}
+
+export function verifyUploadToken(token: string | undefined): boolean {
+  if (!token) return false;
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return false;
+  const expected = crypto.createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  const actual = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expected);
+  if (actual.length !== expectedBuf.length) return false;
+  if (!crypto.timingSafeEqual(actual, expectedBuf)) return false;
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: number };
+    if (typeof parsed.exp !== "number") return false;
+    return parsed.exp > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+export function readUploadTokenExpiry(token: string | undefined): number | null {
+  if (!token) return null;
+  const [payload] = token.split(".");
+  if (!payload) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString()) as { exp?: number };
+    return typeof parsed.exp === "number" ? parsed.exp : null;
+  } catch {
+    return null;
+  }
+}
+
 export function grantShareCookieValue(existing: string | undefined, shareId: string): string {
   const tokens = (existing ?? "").split(",").filter(Boolean);
   const kept = tokens.filter((token) => verifyShareToken(token) !== shareId);

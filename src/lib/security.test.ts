@@ -6,11 +6,14 @@ import {
   hashSharePassword,
   hasShareGrant,
   readAlbumAccess,
+  readUploadTokenExpiry,
   signAlbumAccess,
   signShareToken,
+  signUploadToken,
   verifyAlbumPassword,
   verifySharePassword,
   verifyShareToken,
+  verifyUploadToken,
 } from "./security";
 
 describe("album password hashing", () => {
@@ -96,5 +99,39 @@ describe("share access token", () => {
     expect(cookie.split(",").length).toBe(2);
     expect(hasShareGrant(cookie, "share-2")).toBe(true);
     expect(hasShareGrant("garbage", "share-1")).toBe(false);
+  });
+});
+
+describe("mobile upload token", () => {
+  it("round-trips a valid token", () => {
+    const { token, expiresAt } = signUploadToken();
+    expect(verifyUploadToken(token)).toBe(true);
+    expect(expiresAt).toBeGreaterThan(Date.now());
+    expect(readUploadTokenExpiry(token)).toBe(expiresAt);
+  });
+
+  it("rejects expired tokens", () => {
+    const { token } = signUploadToken();
+    const [payload] = token.split(".");
+    const expiredPayload = Buffer.from(
+      JSON.stringify({ sub: "x", iat: 1, exp: Date.now() - 1000 }),
+    ).toString("base64url");
+    expect(verifyUploadToken(`${expiredPayload}.${payload}`)).toBe(false);
+  });
+
+  it("rejects garbage, tampered, and wrong-secret tokens", () => {
+    expect(verifyUploadToken(undefined)).toBe(false);
+    expect(verifyUploadToken("")).toBe(false);
+    expect(verifyUploadToken("a.b.c")).toBe(false);
+    const { token } = signUploadToken();
+    const [payload] = token.split(".");
+    expect(verifyUploadToken(`${payload}.${"b".repeat(43)}`)).toBe(false);
+    expect(readUploadTokenExpiry("not-a-token")).toBeNull();
+  });
+
+  it("produces unique tokens", () => {
+    const a = signUploadToken().token;
+    const b = signUploadToken().token;
+    expect(a).not.toBe(b);
   });
 });

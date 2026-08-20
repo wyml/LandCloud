@@ -30,20 +30,20 @@ npm run dev                  # http://localhost:3000
 
 ## 环境变量
 
-| 变量                                        | 必填 | 说明                                                                 |
-| ------------------------------------------- | ---- | -------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`                  | ✅   | Supabase 项目 URL                                                    |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`             | ✅   | 客户端 anon key（可公开）                                            |
-| `SUPABASE_SERVICE_ROLE_KEY`                 | ✅   | 服务端密钥，**严禁泄露到客户端**                                     |
-| `ADMIN_EMAIL`                               | ✅   | 唯一管理员邮箱（Supabase Auth 中已存在的账号）                       |
-| `S3_ENDPOINT`                               | ✅   | S3 兼容端点（R2 为 `https://<account_id>.r2.cloudflarestorage.com`） |
-| `S3_REGION`                                 |      | 区域（R2 为 `auto`）                                                 |
-| `S3_BUCKET`                                 | ✅   | 桶名                                                                 |
-| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | ✅   | 存储访问凭证                                                         |
-| `S3_PUBLIC_BASE`                            |      | 直链公网前缀（CDN），留空则仅提供 `/f/` 代理链接                     |
-| `NEXT_PUBLIC_SITE_URL`                      |      | 站点公网地址（sitemap/外链用），默认 `http://localhost:3000`         |
-| `SESSION_SECRET`                            |      | 访客相册/分享 cookie 签名密钥，**生产务必更换为随机长字符串**        |
-| `NEXT_PUBLIC_CESIUM_ION_TOKEN`              |      | Cesium Ion token（地图瓦片），留空自动回退 OSM                       |
+| 变量                                        | 必填 | 说明                                                                       |
+| ------------------------------------------- | ---- | -------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                  | ✅   | Supabase 项目 URL                                                          |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`             | ✅   | 客户端 anon key（可公开）                                                  |
+| `SUPABASE_SERVICE_ROLE_KEY`                 | ✅   | 服务端密钥，**严禁泄露到客户端**                                           |
+| `ADMIN_EMAIL`                               | ✅   | 唯一管理员邮箱（Supabase Auth 中已存在的账号）                             |
+| `S3_ENDPOINT`                               | ✅   | S3 兼容端点（R2 为 `https://<account_id>.r2.cloudflarestorage.com`）       |
+| `S3_REGION`                                 |      | 区域（R2 为 `auto`）                                                       |
+| `S3_BUCKET`                                 | ✅   | 桶名                                                                       |
+| `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` | ✅   | 存储访问凭证                                                               |
+| `S3_PUBLIC_BASE`                            |      | 直链公网前缀（CDN），留空则仅提供 `/f/` 代理链接                           |
+| `NEXT_PUBLIC_SITE_URL`                      |      | 站点公网地址（sitemap/外链用），默认 `http://localhost:3000`               |
+| `SESSION_SECRET`                            |      | 访客相册/分享/手机上传令牌 cookie 签名密钥，**生产务必更换为随机长字符串** |
+| `NEXT_PUBLIC_CESIUM_ION_TOKEN`              |      | Cesium Ion token（地图瓦片），留空自动回退 OSM                             |
 
 ## 常用命令
 

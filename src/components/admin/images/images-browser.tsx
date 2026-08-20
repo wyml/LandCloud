@@ -12,6 +12,7 @@ import {
   deleteImages,
 } from "@/server/actions/images";
 import { ImageEditPanel } from "./image-edit-panel";
+import { MobileUploadDialog } from "./mobile-upload-dialog";
 import { UploadPanel } from "./upload-panel";
 
 const PAGE_SIZE = 24;
@@ -119,6 +120,7 @@ export function ImagesBrowser({
         <Button variant="primary" onPress={() => setUploadOpen(true)}>
           上传图片
         </Button>
+        <MobileUploadDialog />
         <div className="flex overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700">
           <button
             type="button"

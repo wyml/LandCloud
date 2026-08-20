@@ -23,12 +23,13 @@
 
 ## 3. 上传与存储
 
-| 项                                          | 结论 | 实现                                                                     |
-| ------------------------------------------- | ---- | ------------------------------------------------------------------------ |
-| 预签名限制（≤50MB / 10 分钟 / MIME 白名单） | ✅   | `src/app/api/upload/presign/route.ts`、`src/lib/images/variants.ts`      |
-| MIME 魔数校验                               | ✅   | `detectMimeByMagic()` 在 complete 阶段校验；`src/lib/images/variants.ts` |
-| 重复上传去重                                | ✅   | SHA-256 比对返回 duplicate；`src/app/api/upload/complete/route.ts`       |
-| 路径不可被篡改                              | ✅   | 处理流水线由服务端生成 key，不含用户输入目录段                           |
+| 项                                          | 结论 | 实现                                                                                                                                                                                                                 |
+| ------------------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 预签名限制（≤50MB / 10 分钟 / MIME 白名单） | ✅   | `src/app/api/upload/presign/route.ts`、`src/lib/images/variants.ts`                                                                                                                                                  |
+| MIME 魔数校验                               | ✅   | `detectMimeByMagic()` 在 complete 阶段校验；`src/lib/images/variants.ts`                                                                                                                                             |
+| 重复上传去重                                | ✅   | SHA-256 比对返回 duplicate；`src/app/api/upload/complete/route.ts`                                                                                                                                                   |
+| 路径不可被篡改                              | ✅   | 处理流水线由服务端生成 key，不含用户输入目录段                                                                                                                                                                       |
+| 手机扫码免登录上传                          | ✅   | `/upload?token=` 临时令牌（HMAC 签名 + 10 分钟 TTL，`src/lib/security.ts`）；`presign/complete` 经 `guardUploadAccess` 接受 管理员会话 或 有效令牌；`/upload` 已 robots disallow；令牌无状态、短时有效，泄漏影响有限 |
 
 ## 4. 代理与分享（/f、/s）
 

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
-import { badRequest, guardAdmin, parseJsonBody } from "@/lib/api";
+import { badRequest, guardUploadAccess, parseJsonBody } from "@/lib/api";
 import {
   ACCEPTED_MIME,
   MAX_BATCH_SIZE,
@@ -18,8 +18,8 @@ interface PresignFile {
 }
 
 export async function POST(request: Request) {
-  const denied = await guardAdmin();
-  if (denied) return denied;
+  const access = await guardUploadAccess(request);
+  if (!access.ok) return access.response;
 
   const body = await parseJsonBody<{ files?: PresignFile[] }>(request);
   const files = body?.files;
