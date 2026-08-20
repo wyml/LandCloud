@@ -1,11 +1,10 @@
-import { AdminPlaceholder, PageShell } from "@/components/admin/placeholder";
+import { getS3PublicBase, getSiteUrl } from "@/lib/env";
+import { AlbumsManager } from "@/components/admin/albums/albums-manager";
+import { listAlbums } from "@/server/queries/albums";
 
 export const metadata = { title: "相册管理" };
 
-export default function AdminAlbumsPage() {
-  return (
-    <PageShell>
-      <AdminPlaceholder title="相册管理" milestone="M4" />
-    </PageShell>
-  );
+export default async function AdminAlbumsPage() {
+  const albums = await listAlbums();
+  return <AlbumsManager albums={albums} siteUrl={getSiteUrl()} s3PublicBase={getS3PublicBase()} />;
 }

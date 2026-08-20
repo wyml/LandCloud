@@ -123,3 +123,22 @@ export async function getTotalStorageBytes(): Promise<number> {
   if (error) return 0;
   return Number(data ?? 0);
 }
+
+export interface CandidateImage {
+  id: string;
+  title: string;
+  original_name: string;
+  s3_key: string;
+  processing_status: string;
+}
+
+export async function listCandidateImages(limit = 500): Promise<CandidateImage[]> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("images")
+    .select("id, title, original_name, s3_key, processing_status")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data as unknown as CandidateImage[]) ?? [];
+}
