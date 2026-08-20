@@ -19,6 +19,6 @@ export function isAdminUser(user: User | null): boolean {
 export async function requireAdmin(): Promise<User> {
   const user = await getSessionUser();
   if (!user) redirect("/admin/login");
-  if (!isAdminUser(user)) redirect("/");
+  if (!isAdminUser(user)) redirect("/admin/forbidden");
   return user;
 }

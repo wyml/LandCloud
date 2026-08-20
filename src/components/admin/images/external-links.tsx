@@ -9,9 +9,15 @@ interface ExternalLinksProps {
   image: ImageWithRelations;
   siteUrl: string;
   s3PublicBase: string | null;
+  preferDirect?: boolean;
 }
 
-export function ExternalLinks({ image, siteUrl, s3PublicBase }: ExternalLinksProps) {
+export function ExternalLinks({
+  image,
+  siteUrl,
+  s3PublicBase,
+  preferDirect = false,
+}: ExternalLinksProps) {
   const [format, setFormat] = useState<"url" | "markdown" | "html" | "bbcode">("url");
   const [selectedVariant, setSelectedVariant] = useState("original");
   const [copied, setCopied] = useState<string | null>(null);
@@ -29,11 +35,11 @@ export function ExternalLinks({ image, siteUrl, s3PublicBase }: ExternalLinksPro
       items.push({
         variant: v.proxyVariant,
         label: getVariantLabel(v.key),
-        url: entry.direct ?? entry.proxy,
+        url: preferDirect ? (entry.direct ?? entry.proxy) : entry.proxy,
       });
     }
     return items;
-  }, [urls]);
+  }, [urls, preferDirect]);
 
   async function copy(text: string, tag: string) {
     try {

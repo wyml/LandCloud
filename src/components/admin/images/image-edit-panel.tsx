@@ -17,6 +17,7 @@ interface ImageEditPanelProps {
   albums: AlbumOption[];
   siteUrl: string;
   s3PublicBase: string | null;
+  preferDirect?: boolean;
   onClose: () => void;
 }
 
@@ -35,6 +36,7 @@ export function ImageEditPanel({
   albums,
   siteUrl,
   s3PublicBase,
+  preferDirect = false,
   onClose,
 }: ImageEditPanelProps) {
   const [title, setTitle] = useState(image.title);
@@ -227,7 +229,12 @@ export function ImageEditPanel({
             </div>
           )}
 
-          <ExternalLinks image={image} siteUrl={siteUrl} s3PublicBase={s3PublicBase} />
+          <ExternalLinks
+            image={image}
+            siteUrl={siteUrl}
+            s3PublicBase={s3PublicBase}
+            preferDirect={preferDirect}
+          />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 

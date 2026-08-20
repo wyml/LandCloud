@@ -60,6 +60,11 @@ export interface SiteSettings {
   footer: string;
 }
 
+export interface ExternalLinkSettings {
+  directBase: string;
+  defaultType: "direct" | "proxy";
+}
+
 export interface PublicImage {
   id: string;
   title: string;

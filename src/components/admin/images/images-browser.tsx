@@ -35,6 +35,7 @@ interface ImagesBrowserProps {
   tags: TagWithCount[];
   siteUrl: string;
   s3PublicBase: string | null;
+  preferDirect?: boolean;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -73,6 +74,7 @@ export function ImagesBrowser({
   tags,
   siteUrl,
   s3PublicBase,
+  preferDirect = false,
 }: ImagesBrowserProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -496,6 +498,7 @@ export function ImagesBrowser({
           albums={albums}
           siteUrl={siteUrl}
           s3PublicBase={s3PublicBase}
+          preferDirect={preferDirect}
           onClose={() => setEditImage(null)}
         />
       )}
