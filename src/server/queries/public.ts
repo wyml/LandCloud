@@ -349,3 +349,53 @@ export async function countPublicImages(): Promise<number> {
   if (error) throw new Error(error.message);
   return count ?? 0;
 }
+
+export interface MapPhoto {
+  id: string;
+  title: string;
+  lat: number;
+  lng: number;
+  taken_at: string | null;
+}
+
+export async function getMapPhotos(limit = 5000): Promise<{
+  photos: MapPhoto[];
+  locatedCount: number;
+  footprintCount: number;
+}> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("images")
+    .select("id, title, original_name, gps_lat, gps_lng, taken_at")
+    .eq("visibility", "public")
+    .eq("processing_status", "done")
+    .not("gps_lat", "is", null)
+    .not("gps_lng", "is", null)
+    .order("taken_at", { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  const rows =
+    (data as unknown as Array<{
+      id: string;
+      title: string;
+      original_name: string;
+      gps_lat: number;
+      gps_lng: number;
+      taken_at: string | null;
+    }>) ?? [];
+
+  const photos: MapPhoto[] = rows.map((r) => ({
+    id: r.id,
+    title: r.title || r.original_name,
+    lat: r.gps_lat,
+    lng: r.gps_lng,
+    taken_at: r.taken_at,
+  }));
+
+  const footprints = new Set(
+    photos.map((p) => `${Math.round(p.lat * 100)},${Math.round(p.lng * 100)}`),
+  );
+
+  return { photos, locatedCount: photos.length, footprintCount: footprints.size };
+}

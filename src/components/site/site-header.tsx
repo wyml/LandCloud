@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/", label: "首页" },
   { href: "/albums", label: "相册" },
   { href: "/tags", label: "标签" },
+  { href: "/map", label: "地图" },
   { href: "/search", label: "搜索" },
 ];
 
