@@ -20,7 +20,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
           name="q"
           defaultValue={q}
           placeholder="搜索标题 / 描述 / 文件名 / 标签 / 年份"
-          className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+          className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700"
         />
         <button
           type="submit"

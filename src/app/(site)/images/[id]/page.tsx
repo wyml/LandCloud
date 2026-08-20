@@ -5,6 +5,9 @@ import { notFound } from "next/navigation";
 
 import { ViewTracker } from "@/components/site/view-tracker";
 import { getNeighborImageIds, getPublicImage } from "@/server/queries/public";
+import { getExternalLinkSettings } from "@/server/queries/settings";
+import { getS3PublicBase, getSiteUrl } from "@/lib/env";
+import { ExternalLinks } from "@/components/admin/images/external-links";
 
 export async function generateMetadata({ params }: PageProps<"/images/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -34,6 +37,10 @@ export default async function ImageDetailPage({ params }: PageProps<"/images/[id
   const { id } = await params;
   const image = await getPublicImage(id);
   if (!image) notFound();
+
+  const externalLink = await getExternalLinkSettings();
+  const siteUrl = getSiteUrl();
+  const publicBase = externalLink.directBase || getS3PublicBase();
 
   const { prevId, nextId } = await getNeighborImageIds(id, image.taken_at);
 
@@ -77,7 +84,7 @@ export default async function ImageDetailPage({ params }: PageProps<"/images/[id
       <ViewTracker type="image" id={id} />
 
       <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="min-w-0 flex-1 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-900">
+        <div className="min-w-0 flex-1 overflow-hidden rounded-xl bg-neutral-100">
           <img
             src={`/f/${id}/display`}
             alt={image.title || image.original_name}
@@ -104,6 +111,13 @@ export default async function ImageDetailPage({ params }: PageProps<"/images/[id
               {image.description}
             </p>
           )}
+
+          <ExternalLinks
+            image={{ ...image, visibility: "public" }}
+            siteUrl={siteUrl}
+            s3PublicBase={publicBase}
+            preferDirect={externalLink.defaultType === "direct"}
+          />
 
           {image.tags.length > 0 && (
             <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800">

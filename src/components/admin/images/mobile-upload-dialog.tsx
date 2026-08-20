@@ -61,7 +61,7 @@ export function MobileUploadDialog() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl bg-white p-6 dark:bg-neutral-900">
+      <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl bg-white p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">手机上传</h2>
           <Button variant="ghost" size="sm" onPress={() => setOpen(false)}>
@@ -92,7 +92,7 @@ export function MobileUploadDialog() {
                 readOnly
                 value={data.url}
                 onFocus={(e) => e.target.select()}
-                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700"
               />
               <Button variant="ghost" size="sm" onPress={copyUrl}>
                 {copied ? "已复制" : "复制"}

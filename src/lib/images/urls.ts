@@ -35,7 +35,7 @@ export function getVariantLabel(key: keyof ImageVariantUrls): string {
 }
 
 export function buildImageUrls(
-  image: ImageRow,
+  image: Pick<ImageRow, "id" | "s3_key" | "mime">,
   s3PublicBase: string | null,
   siteUrl: string,
 ): ImageVariantUrls {

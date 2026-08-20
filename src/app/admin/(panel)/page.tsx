@@ -56,7 +56,7 @@ export default async function AdminDashboardPage() {
                 href={`/admin/images?q=${encodeURIComponent(image.original_name)}`}
                 className="group overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800"
               >
-                <div className="relative aspect-square w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`${siteUrl}/f/${image.id}/thumb_md`}

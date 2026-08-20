@@ -14,7 +14,7 @@ export function PhotoCard({ image }: { image: PublicImage }) {
   return (
     <Link
       href={`/images/${image.id}`}
-      className="group relative block overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-900"
+      className="group relative block overflow-hidden rounded-xl bg-neutral-100"
     >
       <Image
         src={image.id}

@@ -6,24 +6,24 @@ export function ThemeScript() {
   return (
     <script
       dangerouslySetInnerHTML={{
-        __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}})();`,
+        __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})();`,
       }}
     />
   );
 }
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem("theme");
-    return (
-      stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    );
-  });
+  const [dark, setDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-  }, [dark]);
+    const stored = localStorage.getItem("theme");
+    const isDark =
+      stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setDark(isDark);
+    setMounted(true);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
 
   function toggle() {
     const next = !dark;
@@ -39,7 +39,7 @@ export function ThemeToggle() {
       aria-label={dark ? "切换到浅色模式" : "切换到深色模式"}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-sm dark:border-neutral-800"
     >
-      {dark ? (
+      {mounted && dark ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"

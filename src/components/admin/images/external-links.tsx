@@ -2,11 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { Button } from "@heroui/react";
-import type { ImageWithRelations } from "@/lib/types";
+import type { ImageRow } from "@/lib/types";
 import { buildImageUrls, formatLink, getVariantLabel, variantOrder } from "@/lib/images/urls";
+import { AppSelect } from "@/components/shared/app-select";
+
+type ExternalLinkImage = Pick<ImageRow, "id" | "s3_key" | "mime" | "title" | "visibility">;
 
 interface ExternalLinksProps {
-  image: ImageWithRelations;
+  image: ExternalLinkImage;
   siteUrl: string;
   s3PublicBase: string | null;
   preferDirect?: boolean;
@@ -56,31 +59,27 @@ export function ExternalLinks({
   const formatted = selectedUrl ? formatLink(selectedUrl, format, image.title) : "";
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-neutral-50 p-3 text-sm dark:bg-neutral-900">
+    <div className="flex flex-col gap-2 rounded-lg bg-neutral-50 p-3 text-sm">
       <p className="font-medium">图片外链</p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <AppSelect
           value={selectedVariant}
-          onChange={(e) => setSelectedVariant(e.target.value)}
-          className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          {entries.map((e) => (
-            <option key={e.variant} value={e.variant}>
-              {e.label}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={setSelectedVariant}
+          options={entries.map((e) => ({ value: e.variant, label: e.label }))}
+          ariaLabel="选择变体"
+        />
+        <AppSelect
           value={format}
-          onChange={(e) => setFormat(e.target.value as typeof format)}
-          className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="url">URL</option>
-          <option value="markdown">Markdown</option>
-          <option value="html">HTML</option>
-          <option value="bbcode">BBCode</option>
-        </select>
+          onChange={(v) => setFormat(v as typeof format)}
+          options={[
+            { value: "url", label: "URL" },
+            { value: "markdown", label: "Markdown" },
+            { value: "html", label: "HTML" },
+            { value: "bbcode", label: "BBCode" },
+          ]}
+          ariaLabel="选择格式"
+        />
         <Button size="sm" onPress={() => copy(formatted, `current-${format}`)} variant="primary">
           {copied === `current-${format}` ? "已复制 ✓" : "复制"}
         </Button>
@@ -89,7 +88,7 @@ export function ExternalLinks({
       <input
         readOnly
         value={formatted}
-        className="w-full rounded border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-950"
+        className="w-full rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700"
       />
 
       {image.visibility === "public" && s3PublicBase ? (
@@ -112,7 +111,7 @@ export function ExternalLinks({
                 <input
                   readOnly
                   value={e.url ?? ""}
-                  className="flex-1 rounded border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-950"
+                  className="flex-1 rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
                 />
                 <Button size="sm" onPress={() => copy(e.url ?? "", e.variant)}>
                   {copied === e.variant ? "✓" : "复制"}

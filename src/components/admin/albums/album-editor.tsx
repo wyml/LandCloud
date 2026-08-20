@@ -13,6 +13,7 @@ import {
   setAlbumCover,
   updateAlbum,
 } from "@/server/actions/albums";
+import { AppSelect } from "@/components/shared/app-select";
 
 function thumbUrl(
   imageId: string,
@@ -121,30 +122,31 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="相册名称 *"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
-          <select
+          <AppSelect
             value={visibility}
-            onChange={(e) => setVisibility(e.target.value as typeof visibility)}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="public">公开</option>
-            <option value="private">私密</option>
-            <option value="password">加密</option>
-          </select>
+            onChange={(v) => setVisibility(v as typeof visibility)}
+            options={[
+              { value: "public", label: "公开" },
+              { value: "private", label: "私密" },
+              { value: "password", label: "加密" },
+            ]}
+            ariaLabel="相册可见性"
+          />
           <input
             type="number"
             value={sortOrder}
             onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
         </div>
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
         />
         {visibility === "password" && (
           <input
@@ -152,25 +154,25 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="访问密码（留空保持原密码）"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm">
             封面:
-            <select
+            <AppSelect
               value={coverId}
-              onChange={(e) => setCoverId(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-            >
-              <option value="">自动（最新一张）</option>
-              {images.map((entry) => (
-                <option key={entry.image_id} value={entry.image_id}>
-                  {entry.image.title || entry.image.original_name}
-                </option>
-              ))}
-            </select>
+              onChange={setCoverId}
+              options={[
+                { value: "", label: "自动（最新一张）" },
+                ...images.map((entry) => ({
+                  value: entry.image_id,
+                  label: entry.image.title || entry.image.original_name,
+                })),
+              ]}
+              ariaLabel="相册封面"
+            />
           </label>
           <Button variant="primary" onPress={saveMeta} isDisabled={saving}>
             {saving ? "保存中…" : "保存相册设置"}
@@ -193,7 +195,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             onDragStart={() => setDraggingId(entry.image_id)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => onDropTo(entry.image_id)}
-            className={`group relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900 ${
+            className={`group relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 ${
               draggingId === entry.image_id ? "opacity-40" : ""
             }`}
           >
@@ -232,14 +234,14 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
           role="dialog"
           aria-modal="true"
         >
-          <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl bg-white p-5 dark:bg-neutral-950">
+          <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl bg-white p-5 dark:bg-neutral-800">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">选择要添加的图片</h3>
               <input
                 value={pickerSearch}
                 onChange={(e) => setPickerSearch(e.target.value)}
                 placeholder="搜索标题/文件名"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
               />
               <Button variant="ghost" size="sm" onPress={() => setPickerOpen(false)}>
                 关闭
@@ -251,7 +253,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
                   key={c.id}
                   type="button"
                   onClick={() => void addSelected([c.id])}
-                  className="group overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 text-left dark:border-neutral-800 dark:bg-neutral-900"
+                  className="group overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 text-left dark:border-neutral-800"
                 >
                   <div className="aspect-square w-full">
                     <img

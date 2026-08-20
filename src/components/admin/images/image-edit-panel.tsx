@@ -11,6 +11,7 @@ import {
   updateImageDetails,
 } from "@/server/actions/images";
 import { ExternalLinks } from "./external-links";
+import { AppSelect } from "@/components/shared/app-select";
 
 interface ImageEditPanelProps {
   image: ImageWithRelations;
@@ -107,7 +108,7 @@ export function ImageEditPanel({
       role="dialog"
       aria-modal="true"
     >
-      <div className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-white p-5 dark:bg-neutral-950">
+      <div className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-white p-5 dark:bg-neutral-800">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">编辑图片</h2>
           <Button variant="ghost" size="sm" onPress={onClose}>
@@ -132,7 +133,7 @@ export function ImageEditPanel({
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
             />
           </label>
 
@@ -142,21 +143,23 @@ export function ImageEditPanel({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
             />
           </label>
 
           <label className="flex flex-col gap-1">
             可见性
-            <select
+            <AppSelect
               value={visibility}
-              onChange={(e) => setVisibility(e.target.value as typeof visibility)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-            >
-              <option value="public">公开</option>
-              <option value="private">私密</option>
-              <option value="password">加密</option>
-            </select>
+              onChange={(v) => setVisibility(v as typeof visibility)}
+              options={[
+                { value: "public", label: "公开" },
+                { value: "private", label: "私密" },
+                { value: "password", label: "加密" },
+              ]}
+              ariaLabel="图片可见性"
+              fullWidth
+            />
           </label>
 
           <label className="flex flex-col gap-1">
@@ -165,7 +168,7 @@ export function ImageEditPanel({
               type="datetime-local"
               value={takenAt}
               onChange={(e) => setTakenAt(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
             />
           </label>
 
@@ -200,7 +203,7 @@ export function ImageEditPanel({
                   }
                 }}
                 placeholder="输入标签后回车添加"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
               />
               <Button size="sm" onPress={addTag}>
                 添加

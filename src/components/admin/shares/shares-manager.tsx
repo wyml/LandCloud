@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@heroui/react";
 import type { ShareListItem } from "@/server/queries/shares";
 import { createShare, deleteShare, toggleShareRevoked } from "@/server/actions/shares";
+import { AppSelect } from "@/components/shared/app-select";
 
 interface SharesManagerProps {
   shares: ShareListItem[];
@@ -55,46 +56,47 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
       >
         <h2 className="text-sm font-semibold">创建分享</h2>
         <div className="flex flex-wrap gap-3">
-          <select
+          <AppSelect
             value={targetType}
-            onChange={(e) => {
-              setTargetType(e.target.value as "album" | "image");
+            onChange={(v) => {
+              setTargetType(v as "album" | "image");
               setTargetId("");
             }}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="album">相册</option>
-            <option value="image">单张图片</option>
-          </select>
-          <select
+            options={[
+              { value: "album", label: "相册" },
+              { value: "image", label: "单张图片" },
+            ]}
+            ariaLabel="分享目标类型"
+          />
+          <AppSelect
             value={targetId}
-            onChange={(e) => setTargetId(e.target.value)}
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="">请选择{targetType === "album" ? "相册" : "图片"}</option>
-            {targets.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={setTargetId}
+            options={[
+              { value: "", label: `请选择${targetType === "album" ? "相册" : "图片"}` },
+              ...targets.map((t) => ({ value: t.id, label: t.name })),
+            ]}
+            ariaLabel="选择分享目标"
+            className="flex-1"
+            fullWidth
+          />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="访问密码（留空表示免密）"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
-          <select
+          <AppSelect
             value={expiresHours}
-            onChange={(e) => setExpiresHours(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="24">24 小时</option>
-            <option value="168">7 天</option>
-            <option value="720">30 天</option>
-            <option value="0">永不过期</option>
-          </select>
+            onChange={setExpiresHours}
+            options={[
+              { value: "24", label: "24 小时" },
+              { value: "168", label: "7 天" },
+              { value: "720", label: "30 天" },
+              { value: "0", label: "永不过期" },
+            ]}
+            ariaLabel="有效期"
+          />
           <Button type="submit" variant="primary" isDisabled={saving}>
             {saving ? "创建中…" : "创建分享"}
           </Button>
@@ -104,7 +106,7 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
 
       <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left dark:bg-neutral-900">
+          <thead className="bg-neutral-50 text-left">
             <tr>
               <th className="px-3 py-2">类型</th>
               <th className="px-3 py-2">目标</th>

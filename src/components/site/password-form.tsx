@@ -38,7 +38,7 @@ export function PasswordForm({ albumId }: { albumId: string }) {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="访问密码"
         required
-        className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900"
+        className="rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700"
       />
       {error && <p className="text-center text-sm text-red-600">{error}</p>}
       <button

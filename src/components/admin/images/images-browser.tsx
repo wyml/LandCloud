@@ -14,6 +14,7 @@ import {
 import { ImageEditPanel } from "./image-edit-panel";
 import { MobileUploadDialog } from "./mobile-upload-dialog";
 import { UploadPanel } from "./upload-panel";
+import { AppSelect } from "@/components/shared/app-select";
 
 const PAGE_SIZE = 24;
 
@@ -157,71 +158,71 @@ export function ImagesBrowser({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索标题/文件名/描述"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
           <Button type="submit" size="sm">
             搜索
           </Button>
         </form>
 
-        <select
+        <AppSelect
           value={filters.albumId ?? ""}
-          onChange={(e) => navigate({ albumId: e.target.value || null })}
-          className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="">全部相册</option>
-          {albums.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}（{VISIBILITY_LABEL[a.visibility]}）
-            </option>
-          ))}
-        </select>
+          onChange={(v) => navigate({ albumId: v || null })}
+          options={[
+            { value: "", label: "全部相册" },
+            ...albums.map((a) => ({
+              value: a.id,
+              label: `${a.name}（${VISIBILITY_LABEL[a.visibility]}）`,
+            })),
+          ]}
+          ariaLabel="按相册筛选"
+        />
 
-        <select
+        <AppSelect
           value={filters.tagId ?? ""}
-          onChange={(e) => navigate({ tagId: e.target.value || null })}
-          className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="">全部标签</option>
-          {tags.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}（{t.count}）
-            </option>
-          ))}
-        </select>
+          onChange={(v) => navigate({ tagId: v || null })}
+          options={[
+            { value: "", label: "全部标签" },
+            ...tags.map((t) => ({ value: t.id, label: `${t.name}（${t.count}）` })),
+          ]}
+          ariaLabel="按标签筛选"
+        />
 
-        <select
+        <AppSelect
           value={filters.visibility ?? ""}
-          onChange={(e) => navigate({ visibility: e.target.value || null })}
-          className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="">全部可见性</option>
-          <option value="public">公开</option>
-          <option value="private">私密</option>
-          <option value="password">加密</option>
-        </select>
+          onChange={(v) => navigate({ visibility: v || null })}
+          options={[
+            { value: "", label: "全部可见性" },
+            { value: "public", label: "公开" },
+            { value: "private", label: "私密" },
+            { value: "password", label: "加密" },
+          ]}
+          ariaLabel="按可见性筛选"
+        />
 
-        <select
+        <AppSelect
           value={filters.status ?? ""}
-          onChange={(e) => navigate({ status: e.target.value || null })}
-          className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="">全部状态</option>
-          <option value="done">完成</option>
-          <option value="failed">失败</option>
-          <option value="processing">处理中</option>
-          <option value="pending">待处理</option>
-        </select>
+          onChange={(v) => navigate({ status: v || null })}
+          options={[
+            { value: "", label: "全部状态" },
+            { value: "done", label: "完成" },
+            { value: "failed", label: "失败" },
+            { value: "processing", label: "处理中" },
+            { value: "pending", label: "待处理" },
+          ]}
+          ariaLabel="按状态筛选"
+        />
 
-        <select
+        <AppSelect
           value={filters.sort}
-          onChange={(e) => navigate({ sort: e.target.value as ImagesFilters["sort"] })}
-          className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          <option value="created_at">按上传时间</option>
-          <option value="taken_at">按拍摄时间</option>
-          <option value="view_count">按浏览量</option>
-        </select>
+          onChange={(v) => navigate({ sort: v as ImagesFilters["sort"] })}
+          options={[
+            { value: "created_at", label: "按上传时间" },
+            { value: "taken_at", label: "按拍摄时间" },
+            { value: "view_count", label: "按浏览量" },
+          ]}
+          ariaLabel="排序方式"
+        />
 
         <button
           type="button"
@@ -263,7 +264,7 @@ export function ImagesBrowser({
             value={bulkTag}
             onChange={(e) => setBulkTag(e.target.value)}
             placeholder="批量添加标签（逗号分隔）"
-            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700"
           />
           <Button
             size="sm"
@@ -277,18 +278,15 @@ export function ImagesBrowser({
           >
             加标签
           </Button>
-          <select
+          <AppSelect
             value={bulkAlbum}
-            onChange={(e) => setBulkAlbum(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="">移动到相册…</option>
-            {albums.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
+            onChange={setBulkAlbum}
+            options={[
+              { value: "", label: "移动到相册…" },
+              ...albums.map((a) => ({ value: a.id, label: a.name })),
+            ]}
+            ariaLabel="批量移动到相册"
+          />
           <Button
             size="sm"
             onPress={async () => {
@@ -333,7 +331,7 @@ export function ImagesBrowser({
             return (
               <div
                 key={image.id}
-                className={`group relative overflow-hidden rounded-xl border bg-neutral-100 dark:bg-neutral-900 ${
+                className={`group relative overflow-hidden rounded-xl border bg-neutral-100 ${
                   isSelected
                     ? "border-blue-500 ring-2 ring-blue-500/40"
                     : "border-neutral-200 dark:border-neutral-800"

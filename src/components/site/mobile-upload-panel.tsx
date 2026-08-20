@@ -224,7 +224,7 @@ export function MobileUploadPanel({
             return (
               <li
                 key={key}
-                className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2 dark:bg-neutral-900"
+                className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2"
               >
                 <span className="min-w-0 flex-1 truncate">{f.name}</span>
                 <span className="text-xs opacity-50">{(f.size / 1024 / 1024).toFixed(2)}MB</span>

@@ -1,6 +1,6 @@
 export function SkeletonCard() {
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800">
       <div className="aspect-square w-full animate-pulse bg-neutral-200 dark:bg-neutral-800" />
       <div className="h-4 w-2/3 animate-pulse rounded bg-neutral-200 p-2 m-2 dark:bg-neutral-800" />
     </div>
@@ -42,7 +42,7 @@ export function HomeSkeleton() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="mb-3 break-inside-avoid rounded-xl bg-neutral-100 dark:bg-neutral-900"
+              className="mb-3 break-inside-avoid rounded-xl bg-neutral-100"
             >
               <div className="aspect-square w-full animate-pulse rounded-xl bg-neutral-200 dark:bg-neutral-800" />
             </div>

@@ -216,11 +216,12 @@ export async function getPublicImage(id: string): Promise<PublicImageDetail | nu
     .map((t) => t.tags)
     .filter(Boolean);
 
-  const { id: _id, image_tags: _tags, ...image } = row;
+  const { id: _id, image_tags: _tags, ...rest } = row;
   void _id;
   void _tags;
   return {
-    ...(image as unknown as PublicImage),
+    id: row.id as string,
+    ...(rest as unknown as Omit<PublicImage, "id">),
     exif: (row.exif as Record<string, unknown>) ?? {},
     tags,
     albums,

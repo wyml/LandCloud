@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@heroui/react";
 import type { AlbumListItem } from "@/server/queries/albums";
 import { createAlbum, deleteAlbum, updateAlbum } from "@/server/actions/albums";
+import { AppSelect } from "@/components/shared/app-select";
 
 const VISIBILITY_LABEL: Record<string, string> = {
   public: "公开",
@@ -96,32 +97,31 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="相册名称 *"
             required
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
-          <select
+          <AppSelect
             value={form.visibility}
-            onChange={(e) =>
-              setForm({ ...form, visibility: e.target.value as typeof form.visibility })
-            }
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            <option value="public">公开</option>
-            <option value="private">私密</option>
-            <option value="password">加密</option>
-          </select>
+            onChange={(v) => setForm({ ...form, visibility: v as typeof form.visibility })}
+            options={[
+              { value: "public", label: "公开" },
+              { value: "private", label: "私密" },
+              { value: "password", label: "加密" },
+            ]}
+            ariaLabel="相册可见性"
+          />
           <input
             type="number"
             value={form.sortOrder}
             onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
         </div>
         <input
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
         />
         {form.visibility === "password" && (
           <input
@@ -130,7 +130,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             placeholder={editingId ? "新密码（留空则保持原密码）" : "访问密码 *"}
             required={!editingId}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 dark:bg-neutral-900"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -161,7 +161,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
               className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800"
             >
               <Link href={`/admin/albums/${album.id}`} className="block">
-                <div className="flex h-40 items-center justify-center bg-neutral-100 dark:bg-neutral-900">
+                <div className="flex h-40 items-center justify-center bg-neutral-100">
                   {cover ? (
                     <img
                       src={cover}

@@ -15,7 +15,7 @@ export function AlbumGrid({ albums }: { albums: PublicAlbum[] }) {
           href={`/albums/${album.id}`}
           className="group overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800"
         >
-          <div className="relative aspect-video w-full bg-neutral-100 dark:bg-neutral-900">
+          <div className="relative aspect-video w-full bg-neutral-100">
             {album.cover ? (
               <Image
                 src={album.cover.id}

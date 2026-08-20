@@ -92,7 +92,7 @@ export function Gallery({
             <button
               type="button"
               onClick={() => setLightboxIndex(index)}
-              className="group relative block w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-900"
+              className="group relative block w-full overflow-hidden rounded-xl bg-neutral-100"
             >
               <Image
                 src={image.id}

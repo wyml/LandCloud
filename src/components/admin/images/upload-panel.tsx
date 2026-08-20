@@ -9,6 +9,7 @@ import {
   MAX_FILE_SIZE,
   isAcceptedMime,
 } from "@/lib/images/variants";
+import { AppSelect } from "@/components/shared/app-select";
 
 type FileState =
   | { state: "waiting" | "signing" | "completing"; pct: number }
@@ -222,15 +223,16 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-1">
               可见性:
-              <select
+              <AppSelect
                 value={visibility}
-                onChange={(e) => setVisibility(e.target.value as typeof visibility)}
-                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
-              >
-                <option value="public">公开</option>
-                <option value="private">私密</option>
-                <option value="password">加密</option>
-              </select>
+                onChange={(v) => setVisibility(v as typeof visibility)}
+                options={[
+                  { value: "public", label: "公开" },
+                  { value: "private", label: "私密" },
+                  { value: "password", label: "加密" },
+                ]}
+                ariaLabel="上传可见性"
+              />
             </label>
             <label className="flex items-center gap-1">
               标签:
@@ -238,7 +240,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 placeholder="逗号分隔"
-                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
               />
             </label>
           </div>
@@ -274,7 +276,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
               return (
                 <li
                   key={key}
-                  className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-1.5 dark:bg-neutral-900"
+                  className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-1.5"
                 >
                   <span className="max-w-[240px] truncate">{f.name}</span>
                   <span className="text-xs opacity-50">{(f.size / 1024 / 1024).toFixed(2)}MB</span>
