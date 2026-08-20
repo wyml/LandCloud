@@ -10,10 +10,12 @@ export function Gallery({
   albumId,
   initialImages,
   pageSize = 30,
+  shareId,
 }: {
   albumId: string;
   initialImages: PublicImage[];
   pageSize?: number;
+  shareId?: string;
 }) {
   const [images, setImages] = useState(initialImages);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -26,9 +28,13 @@ export function Gallery({
     if (loading) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/gallery?album=${encodeURIComponent(albumId)}&offset=${offsetRef.current}&limit=${pageSize}`,
-      );
+      const params = new URLSearchParams({
+        album: albumId,
+        offset: String(offsetRef.current),
+        limit: String(pageSize),
+      });
+      if (shareId) params.set("share", shareId);
+      const res = await fetch(`/api/gallery?${params.toString()}`);
       if (!res.ok) throw new Error("failed");
       const data = (await res.json()) as { images: PublicImage[]; hasMore: boolean };
       if (data.images.length === 0) setHasMore(false);
@@ -40,7 +46,7 @@ export function Gallery({
     } finally {
       setLoading(false);
     }
-  }, [albumId, loading, pageSize]);
+  }, [albumId, loading, pageSize, shareId]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -143,13 +149,15 @@ export function Gallery({
               >
                 原图
               </a>
-              <Link
-                href={`/images/${active.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-lg px-3 py-1.5 hover:bg-white/10"
-              >
-                详情
-              </Link>
+              {!shareId ? (
+                <Link
+                  href={`/images/${active.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded-lg px-3 py-1.5 hover:bg-white/10"
+                >
+                  详情
+                </Link>
+              ) : null}
               <button
                 type="button"
                 className="rounded-lg px-3 py-1.5 hover:bg-white/10"
