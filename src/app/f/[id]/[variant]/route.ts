@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 
 import { isAdminUser } from "@/lib/auth";
 import { verifyShareToken } from "@/lib/security";
+import { canAccessImage, proxyCacheControl, resolveVariantObject } from "@/lib/images/access";
 import { isImagePubliclyVisible } from "@/server/queries/public";
-import { variantKey, type Variant } from "@/lib/images/variants";
+import type { Variant } from "@/lib/images/variants";
 import { getObjectBuffer, objectExists } from "@/lib/s3";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -12,13 +13,6 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const VARIANT_SET = new Set<Variant>(["original", "display", "thumb_lg", "thumb_md", "thumb_sm"]);
-
-const MIME_BY_VARIANT: Record<string, string> = {
-  display: "image/webp",
-  thumb_lg: "image/webp",
-  thumb_md: "image/webp",
-  thumb_sm: "image/webp",
-};
 
 async function hasShareAccess(
   admin: ReturnType<typeof createAdminClient>,
@@ -74,16 +68,15 @@ export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[
 
   const publiclyVisible = await isImagePubliclyVisible(image);
 
-  let allowed = publiclyVisible;
-  if (!allowed) {
+  let isAdmin = false;
+  if (!publiclyVisible) {
     const supabase = await createClient();
     const { data: session } = await supabase.auth.getUser();
-    allowed = isAdminUser(session.user);
+    isAdmin = isAdminUser(session.user);
   }
-  if (!allowed) {
-    allowed = await hasShareAccess(admin, id);
-  }
-  if (!allowed) {
+  const shareGranted = !publiclyVisible && !isAdmin ? await hasShareAccess(admin, id) : false;
+
+  if (!canAccessImage({ publiclyVisible, isAdmin, shareGranted })) {
     return new NextResponse("Not found", { status: 404 });
   }
 
@@ -94,18 +87,20 @@ export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[
     key = image.s3_key;
     contentType = image.mime;
   } else {
-    const isGifOrSvg = image.mime === "image/gif" || image.mime === "image/svg+xml";
-    const candidate = variantKey(image.s3_key, variant, "webp");
-    const exists = await objectExists(candidate);
-    if (exists) {
-      key = candidate;
-      contentType = MIME_BY_VARIANT[variant];
-    } else if (variant === "display" && isGifOrSvg) {
-      key = image.s3_key;
-      contentType = image.mime;
-    } else {
+    const resolved = await resolveVariantObject({
+      s3Key: image.s3_key,
+      mime: image.mime,
+      variant,
+      resolver: async (candidate) => {
+        const exists = await objectExists(candidate);
+        return exists ?? null;
+      },
+    });
+    if (!resolved) {
       return new NextResponse("Not found", { status: 404 });
     }
+    key = resolved.key;
+    contentType = resolved.contentType;
   }
 
   try {
@@ -113,7 +108,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": publiclyVisible ? "public, max-age=31536000, immutable" : "no-store",
+        "Cache-Control": proxyCacheControl(publiclyVisible),
         "X-Content-Type-Options": "nosniff",
         "Content-Length": String(buffer.length),
       },
