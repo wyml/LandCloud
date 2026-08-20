@@ -97,7 +97,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="相册名称 *"
             required
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
           <AppSelect
             value={form.visibility}
@@ -114,14 +114,14 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             value={form.sortOrder}
             onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         </div>
         <input
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         />
         {form.visibility === "password" && (
           <input
@@ -130,7 +130,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             placeholder={editingId ? "新密码（留空则保持原密码）" : "访问密码 *"}
             required={!editingId}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}

@@ -199,7 +199,7 @@ export function MobileUploadPanel({
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
           dragOver
             ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
-            : "border-neutral-300 dark:border-neutral-700"
+            : "border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         }`}
       >
         <p className="text-base font-medium">点击选择手机相册中的图片</p>

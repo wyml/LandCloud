@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input, Surface } from "@heroui/react";
 import type { ImageRow } from "@/lib/types";
 import { buildImageUrls, formatLink, getVariantLabel, variantOrder } from "@/lib/images/urls";
 import { AppSelect } from "@/components/shared/app-select";
@@ -59,7 +59,7 @@ export function ExternalLinks({
   const formatted = selectedUrl ? formatLink(selectedUrl, format, image.title) : "";
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-neutral-50 p-3 text-sm">
+    <Surface variant="secondary" className="flex flex-col gap-2 rounded-lg p-3 text-sm">
       <p className="font-medium">图片外链</p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -85,11 +85,7 @@ export function ExternalLinks({
         </Button>
       </div>
 
-      <input
-        readOnly
-        value={formatted}
-        className="w-full rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700"
-      />
+      <Input readOnly value={formatted} aria-label="格式化链接" />
 
       {image.visibility === "public" && s3PublicBase ? (
         <p className="text-xs opacity-60">直链与代理链接均可使用。</p>
@@ -103,16 +99,12 @@ export function ExternalLinks({
 
       <details className="text-xs opacity-80">
         <summary className="cursor-pointer">查看全部变体链接</summary>
-        <ul className="mt-2 flex flex-col gap-1">
+        <ul className="mt-2 flex flex-col gap-2">
           {entries.map((e) => (
             <li key={e.variant} className="flex flex-col gap-1">
               <span>{e.label}</span>
               <div className="flex gap-1">
-                <input
-                  readOnly
-                  value={e.url ?? ""}
-                  className="flex-1 rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
-                />
+                <Input readOnly value={e.url ?? ""} className="flex-1" aria-label={e.label} />
                 <Button size="sm" onPress={() => copy(e.url ?? "", e.variant)}>
                   {copied === e.variant ? "✓" : "复制"}
                 </Button>
@@ -121,6 +113,6 @@ export function ExternalLinks({
           ))}
         </ul>
       </details>
-    </div>
+    </Surface>
   );
 }

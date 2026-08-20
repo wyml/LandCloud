@@ -122,7 +122,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="相册名称 *"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
           <AppSelect
             value={visibility}
@@ -139,14 +139,14 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             value={sortOrder}
             onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         </div>
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         />
         {visibility === "password" && (
           <input
@@ -154,7 +154,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="访问密码（留空保持原密码）"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -241,7 +241,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
                 value={pickerSearch}
                 onChange={(e) => setPickerSearch(e.target.value)}
                 placeholder="搜索标题/文件名"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
               />
               <Button variant="ghost" size="sm" onPress={() => setPickerOpen(false)}>
                 关闭

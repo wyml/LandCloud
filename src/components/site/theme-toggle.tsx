@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function ThemeScript() {
   return (
@@ -14,16 +14,21 @@ export function ThemeScript() {
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mountedRef = useRef(false);
 
-  useEffect(() => {
+  const syncTheme = useCallback(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
     const stored = localStorage.getItem("theme");
     const isDark =
       stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDark(isDark);
-    setMounted(true);
     document.documentElement.classList.toggle("dark", isDark);
   }, []);
+
+  useEffect(() => {
+    syncTheme();
+  }, [syncTheme]);
 
   function toggle() {
     const next = !dark;
@@ -39,7 +44,7 @@ export function ThemeToggle() {
       aria-label={dark ? "切换到浅色模式" : "切换到深色模式"}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-sm dark:border-neutral-800"
     >
-      {mounted && dark ? (
+      {dark ? (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"

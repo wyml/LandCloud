@@ -84,7 +84,7 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="访问密码（留空表示免密）"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
           <AppSelect
             value={expiresHours}

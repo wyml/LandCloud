@@ -122,7 +122,7 @@ export function ImagesBrowser({
           上传图片
         </Button>
         <MobileUploadDialog />
-        <div className="flex overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700">
+        <div className="flex overflow-hidden rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800">
           <button
             type="button"
             onClick={() => setView("grid")}
@@ -158,7 +158,7 @@ export function ImagesBrowser({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索标题/文件名/描述"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
           <Button type="submit" size="sm">
             搜索
@@ -227,7 +227,7 @@ export function ImagesBrowser({
         <button
           type="button"
           onClick={() => navigate({ dir: filters.dir === "desc" ? "asc" : "desc" })}
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         >
           {filters.dir === "desc" ? "↓ 倒序" : "↑ 正序"}
         </button>
@@ -264,7 +264,7 @@ export function ImagesBrowser({
             value={bulkTag}
             onChange={(e) => setBulkTag(e.target.value)}
             placeholder="批量添加标签（逗号分隔）"
-            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700"
+            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
           <Button
             size="sm"
@@ -483,7 +483,7 @@ export function ImagesBrowser({
               className={`h-8 w-8 rounded-lg text-sm ${
                 p === page
                   ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-black"
-                  : "border border-neutral-300 dark:border-neutral-700"
+                  : "border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800"
               }`}
             >
               {p}

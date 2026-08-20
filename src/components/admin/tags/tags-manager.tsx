@@ -28,7 +28,7 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
           value={newTag}
           onChange={(e) => setNewTag(e.target.value)}
           placeholder="新标签名称"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         />
         <Button type="submit" variant="primary">
           创建标签
@@ -52,7 +52,7 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
                     <input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+                      className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 bg-white dark:bg-neutral-800"
                     />
                   ) : (
                     tag.name

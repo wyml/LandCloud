@@ -92,7 +92,7 @@ export function MobileUploadDialog() {
                 readOnly
                 value={data.url}
                 onFocus={(e) => e.target.select()}
-                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700"
+                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
               />
               <Button variant="ghost" size="sm" onPress={copyUrl}>
                 {copied ? "已复制" : "复制"}

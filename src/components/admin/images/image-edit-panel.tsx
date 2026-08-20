@@ -133,7 +133,7 @@ export function ImageEditPanel({
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
           </label>
 
@@ -143,7 +143,7 @@ export function ImageEditPanel({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
           </label>
 
@@ -168,7 +168,7 @@ export function ImageEditPanel({
               type="datetime-local"
               value={takenAt}
               onChange={(e) => setTakenAt(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
           </label>
 
@@ -203,7 +203,7 @@ export function ImageEditPanel({
                   }
                 }}
                 placeholder="输入标签后回车添加"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700"
+                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
               />
               <Button size="sm" onPress={addTag}>
                 添加
@@ -218,7 +218,7 @@ export function ImageEditPanel({
                 {albums.map((a) => (
                   <label
                     key={a.id}
-                    className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700"
+                    className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
                   >
                     <input
                       type="checkbox"

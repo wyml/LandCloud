@@ -201,7 +201,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
         className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
           dragOver
             ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
-            : "border-neutral-300 dark:border-neutral-700"
+            : "border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         }`}
       >
         <p className="text-sm font-medium">拖拽图片到此处，或点击选择文件</p>
@@ -240,7 +240,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 placeholder="逗号分隔"
-                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700"
+                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 bg-white dark:bg-neutral-800"
               />
             </label>
           </div>
@@ -249,7 +249,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
               {albums.map((a) => (
                 <label
                   key={a.id}
-                  className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700"
+                  className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
                 >
                   <input
                     type="checkbox"
