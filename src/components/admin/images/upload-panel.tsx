@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input, Checkbox } from "@heroui/react";
 import type { AlbumOption } from "@/lib/types";
 import {
   ACCEPTED_MIME,
@@ -236,35 +236,31 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
             </label>
             <label className="flex items-center gap-1">
               标签:
-              <input
+              <Input
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
                 placeholder="逗号分隔"
-                className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="w-40"
               />
             </label>
           </div>
           {albums.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {albums.map((a) => (
-                <label
+                <Checkbox
                   key={a.id}
-                  className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                  isSelected={albumIds.has(a.id)}
+                  onChange={() => {
+                    setAlbumIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(a.id)) next.delete(a.id);
+                      else next.add(a.id);
+                      return next;
+                    });
+                  }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={albumIds.has(a.id)}
-                    onChange={() => {
-                      setAlbumIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(a.id)) next.delete(a.id);
-                        else next.add(a.id);
-                        return next;
-                      });
-                    }}
-                  />
                   {a.name}
-                </label>
+                </Checkbox>
               ))}
             </div>
           )}

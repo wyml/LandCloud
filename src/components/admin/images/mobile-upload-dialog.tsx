@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import { createMobileUploadToken } from "@/server/actions/mobile-upload";
 
 interface MobileUploadToken {
@@ -88,11 +88,11 @@ export function MobileUploadDialog() {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 readOnly
                 value={data.url}
-                onFocus={(e) => e.target.select()}
-                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => e.target.select()}
+                className="min-w-0 flex-1"
               />
               <Button variant="ghost" size="sm" onPress={copyUrl}>
                 {copied ? "已复制" : "复制"}

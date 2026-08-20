@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "@heroui/react";
+import { Button, Input, Checkbox } from "@heroui/react";
 import type { ImageWithRelations, TagWithCount, AlbumOption } from "@/lib/types";
 import {
   bulkAddTags,
@@ -154,11 +154,11 @@ export function ImagesBrowser({
             navigate({ q: search || null });
           }}
         >
-          <input
+          <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             placeholder="搜索标题/文件名/描述"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="flex-1"
           />
           <Button type="submit" size="sm">
             搜索
@@ -260,11 +260,11 @@ export function ImagesBrowser({
           >
             设为私密
           </Button>
-          <input
+          <Input
             value={bulkTag}
-            onChange={(e) => setBulkTag(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBulkTag(e.target.value)}
             placeholder="批量添加标签（逗号分隔）"
-            className="rounded-lg border border-neutral-300 px-2 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="flex-1"
           />
           <Button
             size="sm"
@@ -375,12 +375,11 @@ export function ImagesBrowser({
                     <span className="opacity-60">👁 {image.view_count}</span>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={isSelected}
+                <Checkbox
+                  isSelected={isSelected}
                   onChange={() => toggleOne(image.id)}
-                  className="absolute left-2 top-2 h-4 w-4 rounded"
                   aria-label="选择"
+                  className="absolute left-2 top-2"
                 />
               </div>
             );
@@ -392,9 +391,8 @@ export function ImagesBrowser({
             <thead>
               <tr className="border-b border-neutral-200 text-left dark:border-neutral-800">
                 <th className="p-3">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
+                  <Checkbox
+                    isSelected={allSelected}
                     onChange={toggleAll}
                     aria-label="全选"
                   />
@@ -418,9 +416,8 @@ export function ImagesBrowser({
                     }`}
                   >
                     <td className="p-3">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
+                      <Checkbox
+                        isSelected={isSelected}
                         onChange={() => toggleOne(image.id)}
                         aria-label="选择"
                       />

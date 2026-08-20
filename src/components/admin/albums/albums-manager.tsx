@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import type { AlbumListItem } from "@/server/queries/albums";
 import { createAlbum, deleteAlbum, updateAlbum } from "@/server/actions/albums";
 import { AppSelect } from "@/components/shared/app-select";
@@ -92,12 +92,12 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
       >
         <h2 className="text-sm font-semibold">{editingId ? "编辑相册" : "新建相册"}</h2>
         <div className="flex flex-wrap gap-3">
-          <input
+          <Input
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })}
             placeholder="相册名称 *"
             required
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="flex-1"
           />
           <AppSelect
             value={form.visibility}
@@ -109,28 +109,26 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             ]}
             ariaLabel="相册可见性"
           />
-          <input
+          <Input
             type="number"
-            value={form.sortOrder}
-            onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
+            value={String(form.sortOrder)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, sortOrder: Number(e.target.value) || 0 })}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="w-28"
           />
         </div>
-        <input
+        <Input
           value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, description: e.target.value })}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         />
         {form.visibility === "password" && (
-          <input
+          <Input
             type="password"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })}
             placeholder={editingId ? "新密码（留空则保持原密码）" : "访问密码 *"}
             required={!editingId}
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}

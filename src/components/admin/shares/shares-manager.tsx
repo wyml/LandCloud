@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import type { ShareListItem } from "@/server/queries/shares";
 import { createShare, deleteShare, toggleShareRevoked } from "@/server/actions/shares";
 import { AppSelect } from "@/components/shared/app-select";
@@ -79,12 +79,12 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
             className="flex-1"
             fullWidth
           />
-          <input
+          <Input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="访问密码（留空表示免密）"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="flex-1"
           />
           <AppSelect
             value={expiresHours}

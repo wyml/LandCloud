@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import type { AlbumDetail } from "@/server/queries/albums";
 import type { CandidateImage } from "@/server/queries/images";
 import {
@@ -118,11 +118,11 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
 
       <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
         <div className="flex flex-wrap gap-3">
-          <input
+          <Input
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder="相册名称 *"
-            className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="flex-1"
           />
           <AppSelect
             value={visibility}
@@ -134,27 +134,25 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
             ]}
             ariaLabel="相册可见性"
           />
-          <input
+          <Input
             type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+            value={String(sortOrder)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSortOrder(Number(e.target.value) || 0)}
             placeholder="排序权重"
-            className="w-28 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+            className="w-28"
           />
         </div>
-        <input
+        <Input
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescription(e.target.value)}
           placeholder="相册简介"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         />
         {visibility === "password" && (
-          <input
+          <Input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             placeholder="访问密码（留空保持原密码）"
-            className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
           />
         )}
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -237,11 +235,11 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
           <div className="flex max-h-[80vh] w-full max-w-3xl flex-col rounded-xl bg-white p-5 dark:bg-neutral-800">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold">选择要添加的图片</h3>
-              <input
+              <Input
                 value={pickerSearch}
-                onChange={(e) => setPickerSearch(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPickerSearch(e.target.value)}
                 placeholder="搜索标题/文件名"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="flex-1"
               />
               <Button variant="ghost" size="sm" onPress={() => setPickerOpen(false)}>
                 关闭

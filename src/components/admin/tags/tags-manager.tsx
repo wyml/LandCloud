@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input } from "@heroui/react";
 import type { TagWithCount } from "@/lib/types";
 import { createTag, deleteTag, renameTag } from "@/server/actions/tags";
 
@@ -24,11 +24,11 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
           }
         }}
       >
-        <input
+        <Input
           value={newTag}
-          onChange={(e) => setNewTag(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)}
           placeholder="新标签名称"
-          className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+          className="flex-1"
         />
         <Button type="submit" variant="primary">
           创建标签
@@ -49,10 +49,9 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
               <tr key={tag.id} className="border-b border-neutral-100 dark:border-neutral-900">
                 <td className="p-3">
                   {editingId === tag.id ? (
-                    <input
+                    <Input
                       value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      className="rounded border border-neutral-300 px-2 py-1 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingName(e.target.value)}
                     />
                   ) : (
                     tag.name
