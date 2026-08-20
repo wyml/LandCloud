@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button, Input, TextArea, Surface, Checkbox, Chip } from "@heroui/react";
 import type { AlbumOption, ImageWithRelations } from "@/lib/types";
 import {
   deleteImages,
@@ -108,7 +108,10 @@ export function ImageEditPanel({
       role="dialog"
       aria-modal="true"
     >
-      <div className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-white p-5 dark:bg-neutral-800">
+      <Surface
+        variant="default"
+        className="flex h-full w-full max-w-md flex-col overflow-y-auto p-5"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">编辑图片</h2>
           <Button variant="ghost" size="sm" onPress={onClose}>
@@ -129,26 +132,24 @@ export function ImageEditPanel({
 
         <div className="flex flex-col gap-3 text-sm">
           <label className="flex flex-col gap-1">
-            标题
-            <input
+            <span className="text-sm">标题</span>
+            <Input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
             />
           </label>
 
           <label className="flex flex-col gap-1">
-            描述
-            <textarea
+            <span className="text-sm">描述</span>
+            <TextArea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
               rows={3}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
             />
           </label>
 
-          <label className="flex flex-col gap-1">
-            可见性
+          <div className="flex flex-col gap-1">
+            <span className="text-sm">可见性</span>
             <AppSelect
               value={visibility}
               onChange={(v) => setVisibility(v as typeof visibility)}
@@ -160,42 +161,38 @@ export function ImageEditPanel({
               ariaLabel="图片可见性"
               fullWidth
             />
-          </label>
+          </div>
 
           <label className="flex flex-col gap-1">
-            拍摄时间
-            <input
+            <span className="text-sm">拍摄时间</span>
+            <Input
               type="datetime-local"
               value={takenAt}
-              onChange={(e) => setTakenAt(e.target.value)}
-              className="rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTakenAt(e.target.value)}
             />
           </label>
 
           <div className="flex flex-col gap-1">
-            <span>标签</span>
+            <span className="text-sm">标签</span>
             <div className="flex flex-wrap gap-1.5">
               {tagNames.map((name) => (
-                <span
-                  key={name}
-                  className="flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-xs dark:bg-neutral-800"
-                >
+                <Chip key={name} size="sm" variant="soft">
                   {name}
                   <button
                     type="button"
                     onClick={() => setTagNames((prev) => prev.filter((n) => n !== name))}
-                    className="opacity-50 hover:opacity-100"
+                    className="ml-1 opacity-50 hover:opacity-100"
                     aria-label={`移除 ${name}`}
                   >
                     ×
                   </button>
-                </span>
+                </Chip>
               ))}
             </div>
             <div className="flex gap-1">
-              <input
+              <Input
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -203,7 +200,7 @@ export function ImageEditPanel({
                   }
                 }}
                 placeholder="输入标签后回车添加"
-                className="flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                className="flex-1"
               />
               <Button size="sm" onPress={addTag}>
                 添加
@@ -213,20 +210,16 @@ export function ImageEditPanel({
 
           {albums.length > 0 && (
             <div className="flex flex-col gap-1">
-              <span>所属相册</span>
+              <span className="text-sm">所属相册</span>
               <div className="flex flex-wrap gap-2">
                 {albums.map((a) => (
-                  <label
+                  <Checkbox
                     key={a.id}
-                    className="flex cursor-pointer items-center gap-1 rounded border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 bg-white dark:bg-neutral-800"
+                    isSelected={albumIds.has(a.id)}
+                    onChange={() => toggleAlbum(a.id)}
                   >
-                    <input
-                      type="checkbox"
-                      checked={albumIds.has(a.id)}
-                      onChange={() => toggleAlbum(a.id)}
-                    />
                     {a.name}
-                  </label>
+                  </Checkbox>
                 ))}
               </div>
             </div>
@@ -263,7 +256,7 @@ export function ImageEditPanel({
             </Button>
           </div>
         </div>
-      </div>
+      </Surface>
     </div>
   );
 }
