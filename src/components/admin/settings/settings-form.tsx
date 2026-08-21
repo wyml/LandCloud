@@ -101,7 +101,7 @@ export function SettingsForm({
           </p>
           <Checkbox
             isSelected={siteState.defaultPublic}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSiteState((s) => ({ ...s, defaultPublic: e.target.checked }))}
+            onChange={(isSelected: boolean) => setSiteState((s) => ({ ...s, defaultPublic: isSelected }))}
           >
             <span className="text-sm">上传图片默认公开</span>
           </Checkbox>
