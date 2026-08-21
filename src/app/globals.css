@@ -7,7 +7,16 @@
   --accent: #4f46e5;
   --accent-foreground: #ffffff;
   --focus: #4f46e5;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
+  --card-bg: #ffffff;
+  --card-border: #e5e5e5;
+  --muted: #737373;
+  --hero-overlay: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
 }
 
 @theme inline {
@@ -25,10 +34,49 @@
   --accent: #818cf8;
   --accent-foreground: #0f172a;
   --focus: #818cf8;
+  --card-bg: #141414;
+  --card-border: #262626;
+  --muted: #a3a3a3;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Glass morphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Immersive hero overlay */
+.hero-overlay {
+  background: var(--hero-overlay);
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
 }

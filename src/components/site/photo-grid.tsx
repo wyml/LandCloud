@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Aperture } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,12 +13,29 @@ function naturalSize(img: PublicImage) {
   return { width: w, height: h, ratio: w / h };
 }
 
+const container = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.05 },
+  },
+} as const;
+
+const item = {
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+};
+
 export function PhotoCard({ image }: { image: PublicImage }) {
   const { width, height } = naturalSize(image);
   return (
     <Link
       href={`/images/${image.id}`}
-      className="group relative block overflow-hidden rounded-xl bg-neutral-100"
+      className="group relative block overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-900"
     >
       <Image
         src={image.id}
@@ -22,28 +43,37 @@ export function PhotoCard({ image }: { image: PublicImage }) {
         width={width}
         height={height}
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-        className="h-auto w-full transition-transform duration-300 group-hover:scale-[1.03]"
+        className="h-auto w-full transition-transform duration-500 ease-out group-hover:scale-110"
       />
-      {image.title ? (
-        <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/60 to-transparent px-3 pb-2 pt-6 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {image.title}
+      {image.is_live_photo && image.live_photo_video_key ? (
+        <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-[10px] text-white/90 backdrop-blur-md">
+          <Aperture className="h-3 w-3 animate-pulse" />
+          实况
         </span>
       ) : null}
+      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8 text-xs text-white transition-transform duration-300 ease-out group-hover:translate-y-0">
+        {image.title ? <span className="line-clamp-1 drop-shadow-sm">{image.title}</span> : null}
+      </div>
     </Link>
   );
 }
 
 export function PhotoGrid({ images }: { images: PublicImage[] }) {
   if (images.length === 0) {
-    return <p className="col-span-full py-10 text-center opacity-60">暂无公开图片</p>;
+    return <p className="col-span-full py-10 text-center opacity-40">暂无公开图片</p>;
   }
   return (
-    <div className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3">
+    <motion.div
+      className="columns-2 gap-3 md:columns-3 lg:columns-4 [&>*]:mb-3"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {images.map((image) => (
-        <div key={image.id} className="break-inside-avoid">
+        <motion.div key={image.id} variants={item} className="break-inside-avoid">
           <PhotoCard image={image} />
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }

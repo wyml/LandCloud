@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, FieldError, Form, Input, Label, Switch, TextField } from "@heroui/react";
+import { Button, FieldError, Form, Input, Label, Switch, TextField, toast } from "@heroui/react";
 import type { ExternalLinkSettings, SiteSettings } from "@/lib/types";
 import { updateExternalLinkSettings, updateSiteSettings } from "@/server/actions/settings";
 
@@ -16,35 +16,38 @@ export function SettingsForm({
   const router = useRouter();
   const [siteState, setSiteState] = useState(site);
   const [linkState, setLinkState] = useState(externalLink);
-  const [siteStatus, setSiteStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const [linkStatus, setLinkStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function saveSite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setSiteStatus("saving");
+    setSaving(true);
     try {
       await updateSiteSettings(siteState);
-      setSiteStatus("saved");
+      toast.success("站点信息已保存");
       router.refresh();
     } catch (err) {
+      toast.danger(err instanceof Error ? err.message : "保存失败");
       setError(err instanceof Error ? err.message : "保存失败");
-      setSiteStatus("idle");
+    } finally {
+      setSaving(false);
     }
   }
 
   async function saveLinks(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    setLinkStatus("saving");
+    setSaving(true);
     try {
       await updateExternalLinkSettings(linkState);
-      setLinkStatus("saved");
+      toast.success("外链设置已保存");
       router.refresh();
     } catch (err) {
+      toast.danger(err instanceof Error ? err.message : "保存失败");
       setError(err instanceof Error ? err.message : "保存失败");
-      setLinkStatus("idle");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -114,12 +117,9 @@ export function SettingsForm({
             开启后，新上传的图片默认为公开状态；关闭则默认为私密状态。
           </p>
           <div className="flex items-center gap-2">
-            <Button type="submit" variant="primary" isDisabled={siteStatus === "saving"}>
-              {siteStatus === "saving" ? "保存中…" : "保存站点信息"}
+            <Button type="submit" variant="primary" isDisabled={saving}>
+              {saving ? "保存中…" : "保存站点信息"}
             </Button>
-            {siteStatus === "saved" ? (
-              <span className="text-sm text-green-600">已保存 ✓</span>
-            ) : null}
           </div>
         </Form>
       </section>
@@ -159,12 +159,9 @@ export function SettingsForm({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="submit" variant="primary" isDisabled={linkStatus === "saving"}>
-              {linkStatus === "saving" ? "保存中…" : "保存外链设置"}
+            <Button type="submit" variant="primary" isDisabled={saving}>
+              {saving ? "保存中…" : "保存外链设置"}
             </Button>
-            {linkStatus === "saved" ? (
-              <span className="text-sm text-green-600">已保存 ✓</span>
-            ) : null}
           </div>
         </Form>
       </section>

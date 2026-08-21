@@ -37,9 +37,7 @@
   transform: translate(0, 0);
   visibility: visible;
   opacity: 1;
-  transition:
-    opacity 0.2s ease-out,
-    transform 0.2s ease-out;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
 }
 .cesium-baseLayerPicker-sectionTitle {
   display: block;
@@ -100,9 +98,7 @@
 }
 .cesium-baseLayerPicker-item:hover .cesium-baseLayerPicker-itemIcon {
   border-color: #fff;
-  box-shadow:
-    0 0 8px #fff,
-    0 0 8px #fff;
+  box-shadow: 0 0 8px #fff, 0 0 8px #fff;
 }
 .cesium-baseLayerPicker-selectedItem .cesium-baseLayerPicker-itemLabel {
   color: rgb(189, 236, 248);

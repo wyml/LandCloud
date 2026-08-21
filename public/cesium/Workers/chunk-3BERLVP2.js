@@ -23,7 +23,4 @@
  * See https://github.com/CesiumGS/cesium/blob/main/LICENSE.md for full licensing details.
  */
 
-var e = { NONE: 0, TOP: 1, ALL: 2 };
-Object.freeze(e);
-var t = e;
-export { t as a };
+var e={NONE:0,TOP:1,ALL:2};Object.freeze(e);var t=e;export{t as a};

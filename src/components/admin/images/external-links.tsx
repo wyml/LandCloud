@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button, Input, Surface } from "@heroui/react";
+import { Button, Input, Surface, toast } from "@heroui/react";
 import { Check } from "lucide-react";
 import type { ImageRow } from "@/lib/types";
 import { buildImageUrls, formatLink, getVariantLabel, variantOrder } from "@/lib/images/urls";
 import { AppSelect } from "@/components/shared/app-select";
-import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 type ExternalLinkImage = Pick<ImageRow, "id" | "s3_key" | "mime" | "title" | "visibility">;
 
@@ -26,7 +25,6 @@ export function ExternalLinks({
   const [format, setFormat] = useState<"url" | "markdown" | "html" | "bbcode">("url");
   const [selectedVariant, setSelectedVariant] = useState("original");
   const [copied, setCopied] = useState<string | null>(null);
-  const { dialog, showAlert, closeDialog } = useAlertDialog();
 
   const urls = useMemo(
     () => buildImageUrls(image, s3PublicBase, siteUrl),
@@ -52,8 +50,11 @@ export function ExternalLinks({
       await navigator.clipboard.writeText(text);
       setCopied(tag);
       setTimeout(() => setCopied(null), 1500);
+      toast.success("已复制到剪贴板");
     } catch {
-      showAlert("复制失败", "无法复制到剪贴板，请手动复制");
+      toast.danger("复制失败", {
+        description: "无法复制到剪贴板，请手动复制",
+      });
     }
   }
 
@@ -116,13 +117,6 @@ export function ExternalLinks({
           ))}
         </ul>
       </details>
-
-      <AlertDialog
-        open={dialog.open}
-        onClose={closeDialog}
-        title={dialog.title}
-        message={dialog.message}
-      />
     </Surface>
   );
 }

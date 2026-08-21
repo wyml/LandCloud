@@ -12,9 +12,7 @@ span.cesium-projectionPicker-wrapper {
 .cesium-projectionPicker-hidden {
   visibility: hidden;
   opacity: 0;
-  transition:
-    visibility 0s 0.25s,
-    opacity 0.25s linear;
+  transition: visibility 0s 0.25s, opacity 0.25s linear;
 }
 .cesium-projectionPicker-wrapper .cesium-projectionPicker-none {
   display: none;
@@ -28,19 +26,13 @@ span.cesium-projectionPicker-wrapper {
 .cesium-projectionPicker-wrapper .cesium-projectionPicker-buttonOrthographic {
   margin: 0 0 3px 0;
 }
-.cesium-projectionPicker-wrapper
-  .cesium-projectionPicker-buttonPerspective
-  .cesium-projectionPicker-iconOrthographic {
+.cesium-projectionPicker-wrapper .cesium-projectionPicker-buttonPerspective .cesium-projectionPicker-iconOrthographic {
   left: 100%;
 }
-.cesium-projectionPicker-wrapper
-  .cesium-projectionPicker-buttonOrthographic
-  .cesium-projectionPicker-iconPerspective {
+.cesium-projectionPicker-wrapper .cesium-projectionPicker-buttonOrthographic .cesium-projectionPicker-iconPerspective {
   left: -100%;
 }
 .cesium-projectionPicker-wrapper .cesium-projectionPicker-selected {
   border-color: #2e2;
-  box-shadow:
-    0 0 8px #fff,
-    0 0 8px #fff;
+  box-shadow: 0 0 8px #fff, 0 0 8px #fff;
 }

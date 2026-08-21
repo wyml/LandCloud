@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@heroui/react";
+import { Button, Toast } from "@heroui/react";
 import { LayoutDashboard, Image, FolderOpen, Tag, Share2, Settings } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSiteSettings } from "@/server/queries/settings";
@@ -43,6 +43,7 @@ export default async function AdminPanelLayout({ children }: LayoutProps<"/admin
         </form>
       </aside>
       <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <Toast.Provider />
     </div>
   );
 }

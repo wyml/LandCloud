@@ -12,10 +12,9 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
       <ThemeScript />
       <SiteHeader settings={settings} />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
-      <footer
-        className="border-t border-neutral-200 py-6 text-center text-sm opacity-60 dark:border-neutral-800"
-        dangerouslySetInnerHTML={{ __html: settings.footer }}
-      />
+      <footer className="border-t border-neutral-200/60 py-8 text-center text-sm opacity-40 dark:border-neutral-800/60">
+        <div dangerouslySetInnerHTML={{ __html: settings.footer }} />
+      </footer>
     </div>
   );
 }

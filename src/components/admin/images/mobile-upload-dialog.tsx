@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Input } from "@heroui/react";
+import { Button, Input, toast } from "@heroui/react";
 import { Check } from "lucide-react";
 import { createMobileUploadToken } from "@/server/actions/mobile-upload";
 
@@ -45,8 +45,11 @@ export function MobileUploadDialog() {
     try {
       await navigator.clipboard.writeText(data.url);
       setCopied(true);
+      toast.success("已复制到剪贴板");
     } catch {
-      setError("复制失败，请手动复制链接");
+      toast.danger("复制失败", {
+        description: "请手动复制链接",
+      });
     }
   }
 

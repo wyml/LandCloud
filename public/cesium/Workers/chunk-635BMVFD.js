@@ -23,7 +23,4 @@
  * See https://github.com/CesiumGS/cesium/blob/main/LICENSE.md for full licensing details.
  */
 
-var e = { OUTSIDE: -1, INTERSECTING: 0, INSIDE: 1 };
-Object.freeze(e);
-var t = e;
-export { t as a };
+var e={OUTSIDE:-1,INTERSECTING:0,INSIDE:1};Object.freeze(e);var t=e;export{t as a};
