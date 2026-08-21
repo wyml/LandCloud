@@ -4,11 +4,27 @@ import { AlbumGrid } from "@/components/site/album-grid";
 import { PhotoGrid } from "@/components/site/photo-grid";
 import { SectionReveal } from "@/components/site/section-reveal";
 import { searchPublic } from "@/server/queries/public";
-import { Search } from "lucide-react";
+import { getSiteSettings } from "@/server/queries/settings";
+import { getSessionUser, isAdminUser } from "@/lib/auth";
+import { Search, Lock } from "lucide-react";
 
 export const metadata: Metadata = { title: "搜索" };
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
+  const settings = await getSiteSettings();
+  const user = await getSessionUser();
+  const isAdmin = await isAdminUser(user);
+  const isPrivate = settings.privateMode && !isAdmin;
+
+  if (isPrivate) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 opacity-50">
+        <Lock className="h-12 w-12" />
+        <p className="text-lg">站点已开启私密模式</p>
+      </div>
+    );
+  }
+
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const result = q ? await searchPublic(q) : { images: [], albums: [] };

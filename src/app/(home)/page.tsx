@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AlbumGrid } from "@/components/site/album-grid";
+import { GlobeHome } from "@/components/site/globe-home";
 import { HomeHero } from "@/components/site/home-hero";
 import { PhotoGrid } from "@/components/site/photo-grid";
 import { SectionReveal } from "@/components/site/section-reveal";
@@ -11,13 +12,32 @@ import {
   listRecentPublicImages,
 } from "@/server/queries/public";
 import { getSiteSettings } from "@/server/queries/settings";
+import { getSessionUser, isAdminUser } from "@/lib/auth";
 import { Tag, Images, Camera } from "lucide-react";
 
 export default async function HomePage() {
   const settings = await getSiteSettings();
+  const user = await getSessionUser();
+  const isAdmin = await isAdminUser(user);
+  const isPrivate = settings.privateMode && !isAdmin;
+
+  if (settings.homepageTemplate === "globe") {
+    const recent = await listRecentPublicImages(9);
+    return <GlobeHome settings={settings} recentPhotos={recent} />;
+  }
+
+  const heroImage = await listRandomPublicImages();
+
+  if (isPrivate) {
+    return (
+      <div className="flex flex-col">
+        <HomeHero settings={settings} image={heroImage} />
+      </div>
+    );
+  }
+
   const albums = await listPublicAlbums();
   const tags = await listPublicTags();
-  const heroImage = await listRandomPublicImages();
   const recent = await listRecentPublicImages(24);
 
   return (

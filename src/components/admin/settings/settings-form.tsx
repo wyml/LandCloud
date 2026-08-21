@@ -116,6 +116,42 @@ export function SettingsForm({
           <p className="text-xs opacity-60">
             开启后，新上传的图片默认为公开状态；关闭则默认为私密状态。
           </p>
+          <Switch
+            isSelected={siteState.privateMode}
+            onChange={(isSelected: boolean) => setSiteState((s) => ({ ...s, privateMode: isSelected }))}
+          >
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              私密模式
+            </Switch.Content>
+          </Switch>
+          <p className="text-xs opacity-60">
+            开启后，前端界面不展示图片内容，仅显示背景图、标题和副标题。图片分享、外链和详情页不受影响。管理员登录后可见完整内容。
+          </p>
+          <div>
+            <span className="text-sm">首页模板</span>
+            <div className="mt-1 flex gap-2">
+              {(["classic", "globe"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setSiteState((s) => ({ ...s, homepageTemplate: t }))}
+                  className={`rounded-lg border px-3 py-1.5 text-sm ${
+                    siteState.homepageTemplate === t
+                      ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-black"
+                      : "border-neutral-300 dark:border-neutral-700"
+                  }`}
+                >
+                  {t === "classic" ? "经典 Hero" : "3D 地球"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs opacity-60">
+              经典模板：背景图 + 标题；地球模板：沉浸式 3D 虚拟地球，每次随机飞往一个照片地点
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <Button type="submit" variant="primary" isDisabled={saving}>
               {saving ? "保存中…" : "保存站点信息"}

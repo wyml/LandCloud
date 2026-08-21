@@ -10,6 +10,8 @@ export interface SiteSettingsInput {
   description: string;
   footer: string;
   defaultPublic: boolean;
+  privateMode: boolean;
+  homepageTemplate: "classic" | "globe";
 }
 
 export async function updateSiteSettings(input: SiteSettingsInput) {
@@ -24,6 +26,8 @@ export async function updateSiteSettings(input: SiteSettingsInput) {
         description: input.description.trim(),
         footer: input.footer.trim(),
         default_public: input.defaultPublic,
+        private_mode: input.privateMode,
+        homepage_template: input.homepageTemplate,
       },
     },
     { onConflict: "key" },

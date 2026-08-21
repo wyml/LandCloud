@@ -62,6 +62,8 @@ export interface SiteSettings {
   description: string;
   footer: string;
   defaultPublic: boolean;
+  privateMode: boolean;
+  homepageTemplate: "classic" | "globe";
 }
 
 export interface ExternalLinkSettings {

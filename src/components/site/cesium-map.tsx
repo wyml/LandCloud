@@ -18,6 +18,8 @@ interface TooltipState {
   y: number;
   photos: TooltipPhoto[];
   isCluster: boolean;
+  anchorLng: number;
+  anchorLat: number;
 }
 
 function loadCesiumAssets(): Promise<void> {
@@ -40,23 +42,84 @@ function loadCesiumAssets(): Promise<void> {
   });
 }
 
-function extractPhotos(entity: unknown): TooltipPhoto[] {
-  const e = entity as {
-    cluster?: { clusteredEntities?: Array<{ id: string; properties?: { getValue?: (t?: unknown) => { imageId?: string; title?: string } } }> };
-    id?: string;
+type ClusterLike = {
+  clusteredEntities?: Array<{
+    id: string;
+    position?: { getValue?: (t: unknown) => InstanceType<CesiumNS["Cartesian3"]> };
     properties?: { getValue?: (t?: unknown) => { imageId?: string; title?: string } };
-  };
-  if (e.cluster?.clusteredEntities?.length) {
-    return e.cluster.clusteredEntities.map((ce) => ({
-      id: ce.id,
-      title: ce.properties?.getValue?.()?.title ?? "",
-    }));
+  }>;
+};
+type EntityLike = {
+  id?: string;
+  cluster?: ClusterLike;
+  clusteredEntities?: ClusterLike["clusteredEntities"];
+  properties?: { getValue?: (t?: unknown) => { imageId?: string; title?: string } };
+};
+
+function getClusteredEntities(entity: unknown): ClusterLike["clusteredEntities"] {
+  const e = entity as EntityLike;
+  if (e.cluster?.clusteredEntities?.length) return e.cluster.clusteredEntities;
+  if (e.clusteredEntities?.length) return e.clusteredEntities;
+  return undefined;
+}
+
+function extractPhotos(entity: unknown, photoMap: Map<string, MapPhoto>): TooltipPhoto[] {
+  const e = entity as EntityLike;
+  const clustered = getClusteredEntities(entity);
+  if (clustered?.length) {
+    const photos: TooltipPhoto[] = [];
+    for (const ce of clustered) {
+      // Try by entity ID
+      let photo = photoMap.get(ce.id ?? "");
+      // Fallback: try by properties.imageId
+      if (!photo) {
+        const props = ce.properties?.getValue?.();
+        if (props?.imageId) photo = photoMap.get(props.imageId);
+      }
+      if (photo) {
+        photos.push({ id: photo.id, title: photo.title });
+      } else if (ce.id) {
+        photos.push({ id: ce.id, title: ce.properties?.getValue?.()?.title ?? "" });
+      }
+    }
+    return photos;
   }
   const props = e.properties?.getValue?.();
   if (props?.imageId) {
     return [{ id: props.imageId, title: props.title ?? "" }];
   }
   return [];
+}
+
+function getPickedEntity(picked: unknown): unknown {
+  if (!picked) return null;
+  const p = picked as Record<string, unknown>;
+
+  // Direct cluster (picked object itself has clusteredEntities)
+  if (Array.isArray(p.clusteredEntities) && p.clusteredEntities.length > 0) return p;
+
+  // Entity with cluster sub-object
+  const id = p.id as Record<string, unknown> | undefined;
+  if (id) {
+    if (Array.isArray(id.clusteredEntities) && id.clusteredEntities.length > 0) return id;
+    if (id.cluster && Array.isArray((id.cluster as Record<string, unknown>).clusteredEntities)) return id;
+    if (typeof id === "object" && "properties" in id) return id;
+  }
+
+  // Primitive level pick
+  const primitive = p.primitive as Record<string, unknown> | undefined;
+  if (primitive?.id) {
+    const pid = primitive.id as Record<string, unknown>;
+    if (Array.isArray(pid.clusteredEntities) && pid.clusteredEntities.length > 0) return pid;
+    if (pid.cluster && Array.isArray((pid.cluster as Record<string, unknown>).clusteredEntities)) return pid;
+    if (typeof pid === "object" && "properties" in pid) return pid;
+  }
+
+  return null;
+}
+
+function isInteractive(entity: unknown, photoMap: Map<string, MapPhoto>): boolean {
+  return extractPhotos(entity, photoMap).length > 0;
 }
 
 export default function CesiumMap() {
@@ -117,6 +180,13 @@ export default function CesiumMap() {
               ),
         });
         viewerRef.current = viewer;
+
+        viewer.resolutionScale = window.devicePixelRatio;
+        viewer.scene.globe.maximumScreenSpaceError = 1.5;
+        viewer.scene.backgroundColor = Cesium.Color.BLACK;
+        if (viewer.scene.skyAtmosphere) viewer.scene.skyAtmosphere.show = false;
+        viewer.scene.globe.showGroundAtmosphere = false;
+        viewer.scene.fog.enabled = false;
 
         viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
         viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100_000_000;
@@ -179,17 +249,48 @@ export default function CesiumMap() {
         }
 
         function showTooltip(entity: unknown, screenPos: { x: number; y: number }) {
-          const photos = extractPhotos(entity);
+          const photos = extractPhotos(entity, photoMap);
           if (photos.length === 0) {
             syncTooltip(null);
             return;
           }
-          const isCluster = !!(entity as { cluster?: unknown }).cluster;
+          const clustered = getClusteredEntities(entity);
+          const isCluster = !!clustered;
+          let anchorLng = 0;
+          let anchorLat = 0;
+          if (isCluster && clustered) {
+            let sumLng = 0;
+            let sumLat = 0;
+            let count = 0;
+            for (const ce of clustered) {
+              const p = photoMap.get(ce.id);
+              if (p) {
+                sumLng += p.lng;
+                sumLat += p.lat;
+                count++;
+              }
+            }
+            if (count > 0) {
+              anchorLng = sumLng / count;
+              anchorLat = sumLat / count;
+            }
+          } else {
+            const props = (entity as EntityLike).properties?.getValue?.();
+            if (props?.imageId) {
+              const p = photoMap.get(props.imageId);
+              if (p) {
+                anchorLng = p.lng;
+                anchorLat = p.lat;
+              }
+            }
+          }
           syncTooltip({
             x: screenPos.x,
             y: screenPos.y,
             photos,
             isCluster,
+            anchorLng,
+            anchorLat,
           });
         }
 
@@ -197,16 +298,20 @@ export default function CesiumMap() {
 
         handler.setInputAction(
           (movement: { endPosition: InstanceType<CesiumNS["Cartesian2"]> }) => {
-            if (tooltipRef.current) return;
             const picked = viewer.scene.pick(movement.endPosition);
-            if (!picked || !picked.id) return;
-            const entity = picked.id;
-            if (entity.cluster?.clusteredEntities?.length || entity.properties?.getValue?.()?.imageId) {
-              if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-              hoverTimerRef.current = setTimeout(() => {
-                showTooltip(entity, { x: movement.endPosition.x, y: movement.endPosition.y });
-              }, 200);
+            const entity = getPickedEntity(picked);
+            if (!entity || !isInteractive(entity, photoMap)) {
+              if (hoverTimerRef.current) {
+                clearTimeout(hoverTimerRef.current);
+                hoverTimerRef.current = null;
+              }
+              if (tooltipRef.current) syncTooltip(null);
+              return;
             }
+            if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+            hoverTimerRef.current = setTimeout(() => {
+              showTooltip(entity, { x: movement.endPosition.x, y: movement.endPosition.y });
+            }, 150);
           },
           Cesium.ScreenSpaceEventType.MOUSE_MOVE,
         );
@@ -218,18 +323,16 @@ export default function CesiumMap() {
               hoverTimerRef.current = null;
             }
             const picked = viewer.scene.pick(movement.position);
-            if (!picked || !picked.id) {
+            const entity = getPickedEntity(picked);
+            if (!entity || !isInteractive(entity, photoMap)) {
               syncTooltip(null);
               return;
             }
-            const entity = picked.id;
-            const cluster = entity.cluster;
-            if (cluster?.clusteredEntities?.length) {
+            const clustered = getClusteredEntities(entity);
+            if (clustered?.length) {
               showTooltip(entity, { x: movement.position.x, y: movement.position.y });
-              const points = cluster.clusteredEntities
-                .map((e: { position?: { getValue?: (t: unknown) => InstanceType<CesiumNS["Cartesian3"]> } }) =>
-                  e.position?.getValue?.(Cesium.JulianDate.now()),
-                )
+              const points = clustered
+                .map((e) => e.position?.getValue?.(Cesium.JulianDate.now()))
                 .filter(Boolean) as InstanceType<CesiumNS["Cartesian3"]>[];
               if (points.length > 0) {
                 const sphere = Cesium.BoundingSphere.fromPoints(points);
@@ -237,21 +340,15 @@ export default function CesiumMap() {
               }
               return;
             }
-            const props = entity.properties?.getValue?.(Cesium.JulianDate.now());
-            if (props?.imageId) {
-              showTooltip(entity, { x: movement.position.x, y: movement.position.y });
-            }
+            showTooltip(entity, { x: movement.position.x, y: movement.position.y });
           },
           Cesium.ScreenSpaceEventType.LEFT_CLICK,
         );
 
         viewer.scene.postRender.addEventListener(() => {
           const current = tooltipRef.current;
-          if (!current || current.photos.length === 0) return;
-          const firstPhoto = current.photos[0];
-          const photo = photoMap.get(firstPhoto.id);
-          if (!photo) return;
-          const worldPos = Cesium.Cartesian3.fromDegrees(photo.lng, photo.lat);
+          if (!current) return;
+          const worldPos = Cesium.Cartesian3.fromDegrees(current.anchorLng, current.anchorLat);
           const canvasPos = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, worldPos);
           if (canvasPos) {
             const newX = Math.round(canvasPos.x);
@@ -260,10 +357,6 @@ export default function CesiumMap() {
               syncTooltip({ ...current, x: newX, y: newY });
             }
           }
-        });
-
-        viewer.camera.changed.addEventListener(() => {
-          syncTooltip(null);
         });
 
         if (positions.length > 0) {
@@ -291,23 +384,23 @@ export default function CesiumMap() {
   }, [router, syncTooltip]);
 
   return (
-    <div className="relative">
+    <div className="relative h-[calc(100svh-56px)] w-full">
       {stats ? (
         <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2">
-          <div className="rounded-lg bg-white/90 px-3 py-2 text-sm shadow dark:bg-black/70">
+          <div className="rounded-lg bg-black/60 px-3 py-2 text-sm text-white shadow-lg backdrop-blur-sm">
             <span className="font-semibold">{stats.locatedCount}</span> 张带位置照片
           </div>
-          <div className="rounded-lg bg-white/90 px-3 py-2 text-sm shadow dark:bg-black/70">
+          <div className="rounded-lg bg-black/60 px-3 py-2 text-sm text-white shadow-lg backdrop-blur-sm">
             <span className="font-semibold">{stats.footprintCount}</span> 个足迹点位
           </div>
         </div>
       ) : null}
       {error ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-red-600">
+        <div className="absolute inset-0 z-10 flex items-center justify-center text-sm text-red-400">
           {error}
         </div>
       ) : null}
-      <div ref={containerRef} className="h-[70vh] w-full overflow-hidden rounded-xl" />
+      <div ref={containerRef} className="h-full w-full" />
 
       {tooltip && tooltip.photos.length > 0 && (
         <div
@@ -367,10 +460,6 @@ export default function CesiumMap() {
           </div>
         </div>
       )}
-
-      <p className="mt-2 text-center text-xs opacity-50">
-        桌面端悬停查看预览，点击聚合圆缩放展开；点击图片查看详情
-      </p>
     </div>
   );
 }

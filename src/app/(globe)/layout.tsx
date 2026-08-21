@@ -5,19 +5,15 @@ import { getSessionUser, isAdminUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function SiteLayout({ children }: LayoutProps<"/">) {
+export default async function GlobeLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSiteSettings();
   const user = await getSessionUser();
   const isAdmin = await isAdminUser(user);
-
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-black">
       <ThemeScript />
       <SiteHeader settings={settings} isAdmin={isAdmin} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
-      <footer className="border-t border-neutral-200/60 py-8 text-center text-sm opacity-40 dark:border-neutral-800/60">
-        <div dangerouslySetInnerHTML={{ __html: settings.footer }} />
-      </footer>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

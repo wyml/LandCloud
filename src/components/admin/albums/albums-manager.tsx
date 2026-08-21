@@ -3,7 +3,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Button, Input } from "@heroui/react";
+import { Button, Chip, Input } from "@heroui/react";
+import { Eye, Images, ArrowUpDown, Lock, Globe, EyeOff } from "lucide-react";
 import type { AlbumListItem } from "@/server/queries/albums";
 import {
   bulkDeleteAlbums,
@@ -286,16 +287,35 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
                   >
                     {album.name}
                   </Link>
-                  <span className="shrink-0 rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
-                    {VISIBILITY_LABEL[album.visibility]}
-                  </span>
+                  <Chip
+                    size="sm"
+                    variant="soft"
+                    color={album.visibility === "public" ? "success" : album.visibility === "hidden" ? "warning" : "default"}
+                  >
+                    {album.visibility === "public" ? <Globe className="h-3.5 w-3.5" /> :
+                     album.visibility === "password" ? <Lock className="h-3.5 w-3.5" /> :
+                     album.visibility === "hidden" ? <EyeOff className="h-3.5 w-3.5" /> :
+                     <Eye className="h-3.5 w-3.5" />}
+                    <Chip.Label>{VISIBILITY_LABEL[album.visibility]}</Chip.Label>
+                  </Chip>
                 </div>
                 <p className="mt-1 line-clamp-1 text-xs opacity-60">
                   {album.description || "无简介"}
                 </p>
-                <p className="mt-1 text-xs opacity-60">
-                  {album.imageCount} 张 · 浏览量 {album.view_count} · 权重 {album.sort_order}
-                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Chip size="sm" variant="soft">
+                    <Images className="h-3.5 w-3.5" />
+                    <Chip.Label>{album.imageCount} 张</Chip.Label>
+                  </Chip>
+                  <Chip size="sm" variant="soft">
+                    <Eye className="h-3.5 w-3.5" />
+                    <Chip.Label>{album.view_count}</Chip.Label>
+                  </Chip>
+                  <Chip size="sm" variant="soft">
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    <Chip.Label>{album.sort_order}</Chip.Label>
+                  </Chip>
+                </div>
                 <div className="mt-2 flex gap-2">
                   <Link href={`/admin/albums/${album.id}`}>
                     <Button size="sm" variant="outline">

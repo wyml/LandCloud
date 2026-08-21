@@ -3,8 +3,8 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Button, Input, Checkbox, Chip } from "@heroui/react";
-import { Aperture } from "lucide-react";
+import { Button, Checkbox, Chip, Input } from "@heroui/react";
+import { Aperture, Eye, EyeOff, Globe, Lock, Clock, CheckCircle, XCircle, Loader, Images } from "lucide-react";
 import type { ImageWithRelations, TagWithCount, AlbumOption } from "@/lib/types";
 import {
   bulkAddTags,
@@ -426,25 +426,37 @@ export function ImagesBrowser({
                 </button>
                 <div className="p-2">
                   <p className="truncate text-xs">{image.title || image.original_name}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
-                    <span
-                      className={`rounded px-1 py-0.5 ${
-                        image.processing_status === "done"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : image.processing_status === "failed"
-                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
-                      }`}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                    <Chip
+                      size="sm"
+                      variant="soft"
+                      color={image.processing_status === "done" ? "success" : image.processing_status === "failed" ? "danger" : "warning"}
                     >
-                      {STATUS_LABEL[image.processing_status]}
-                    </span>
-                    <span className="rounded bg-neutral-200 px-1 py-0.5 dark:bg-neutral-800">
-                      {VISIBILITY_LABEL[image.visibility]}
-                    </span>
-                    <span className="opacity-60">👁 {image.view_count}</span>
+                      {image.processing_status === "done" ? <CheckCircle className="h-3.5 w-3.5" /> :
+                       image.processing_status === "failed" ? <XCircle className="h-3.5 w-3.5" /> :
+                       image.processing_status === "processing" ? <Loader className="h-3.5 w-3.5" /> :
+                       <Clock className="h-3.5 w-3.5" />}
+                      <Chip.Label>{STATUS_LABEL[image.processing_status]}</Chip.Label>
+                    </Chip>
+                    <Chip
+                      size="sm"
+                      variant="soft"
+                      color={image.visibility === "public" ? "success" : image.visibility === "hidden" ? "warning" : "default"}
+                    >
+                      {image.visibility === "public" ? <Globe className="h-3.5 w-3.5" /> :
+                       image.visibility === "password" ? <Lock className="h-3.5 w-3.5" /> :
+                       image.visibility === "hidden" ? <EyeOff className="h-3.5 w-3.5" /> :
+                       <Eye className="h-3.5 w-3.5" />}
+                      <Chip.Label>{VISIBILITY_LABEL[image.visibility]}</Chip.Label>
+                    </Chip>
+                    <Chip size="sm" variant="soft">
+                      <Eye className="h-3.5 w-3.5" />
+                      <Chip.Label>{image.view_count}</Chip.Label>
+                    </Chip>
                     {image.albums.map((a) => (
-                      <Chip key={a.id} size="sm" variant="soft" className="h-4 text-[10px]">
-                        {a.name}
+                      <Chip key={a.id} size="sm" variant="soft">
+                        <Images className="h-3.5 w-3.5" />
+                        <Chip.Label>{a.name}</Chip.Label>
                       </Chip>
                     ))}
                   </div>
@@ -531,20 +543,50 @@ export function ImagesBrowser({
                         {image.title || image.original_name}
                       </button>
                     </td>
-                    <td className="p-3">{VISIBILITY_LABEL[image.visibility]}</td>
-                    <td className="p-3">{STATUS_LABEL[image.processing_status]}</td>
+                    <td className="p-3">
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={image.visibility === "public" ? "success" : image.visibility === "hidden" ? "warning" : "default"}
+                      >
+                        {image.visibility === "public" ? <Globe className="h-3.5 w-3.5" /> :
+                         image.visibility === "password" ? <Lock className="h-3.5 w-3.5" /> :
+                         image.visibility === "hidden" ? <EyeOff className="h-3.5 w-3.5" /> :
+                         <Eye className="h-3.5 w-3.5" />}
+                        <Chip.Label>{VISIBILITY_LABEL[image.visibility]}</Chip.Label>
+                      </Chip>
+                    </td>
+                    <td className="p-3">
+                      <Chip
+                        size="sm"
+                        variant="soft"
+                        color={image.processing_status === "done" ? "success" : image.processing_status === "failed" ? "danger" : "warning"}
+                      >
+                        {image.processing_status === "done" ? <CheckCircle className="h-3.5 w-3.5" /> :
+                         image.processing_status === "failed" ? <XCircle className="h-3.5 w-3.5" /> :
+                         image.processing_status === "processing" ? <Loader className="h-3.5 w-3.5" /> :
+                         <Clock className="h-3.5 w-3.5" />}
+                        <Chip.Label>{STATUS_LABEL[image.processing_status]}</Chip.Label>
+                      </Chip>
+                    </td>
                     <td className="max-w-[180px] p-3">
                       <div className="flex flex-wrap gap-1">
                         {image.albums.length > 0
                           ? image.albums.map((a) => (
-                              <Chip key={a.id} size="sm" variant="soft" className="h-5 text-[10px]">
-                                {a.name}
+                              <Chip key={a.id} size="sm" variant="soft">
+                                <Images className="h-3.5 w-3.5" />
+                                <Chip.Label>{a.name}</Chip.Label>
                               </Chip>
                             ))
                           : <span className="text-xs opacity-40">—</span>}
                       </div>
                     </td>
-                    <td className="p-3">{image.view_count}</td>
+                    <td className="p-3">
+                      <Chip size="sm" variant="soft">
+                        <Eye className="h-3.5 w-3.5" />
+                        <Chip.Label>{image.view_count}</Chip.Label>
+                      </Chip>
+                    </td>
                     <td className="p-3 text-xs opacity-70">
                       {new Date(image.created_at).toLocaleString("zh-CN")}
                     </td>

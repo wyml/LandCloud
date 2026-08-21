@@ -10,7 +10,13 @@ import { Home, Images, Tag, Globe, Search } from "lucide-react";
 import type { SiteSettings } from "@/lib/types";
 import { ThemeToggle } from "./theme-toggle";
 
-const NAV_ITEMS = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "首页", icon: Home },
   { href: "/albums", label: "相册", icon: Images },
   { href: "/tags", label: "标签", icon: Tag },
@@ -18,22 +24,39 @@ const NAV_ITEMS = [
   { href: "/search", label: "搜索", icon: Search },
 ];
 
-export function SiteHeader({ settings }: { settings: SiteSettings }) {
+const PRIVATE_NAV_ITEMS: NavItem[] = [
+  { href: "/", label: "首页", icon: Home },
+];
+
+export function SiteHeader({
+  settings,
+  isAdmin = false,
+  homepageTemplate,
+}: {
+  settings: SiteSettings;
+  isAdmin?: boolean;
+  homepageTemplate?: "classic" | "globe";
+}) {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isMap = pathname === "/map" || pathname.startsWith("/map/");
+  const isGlobeHome = isHome && homepageTemplate === "globe";
   const [scrolled, setScrolled] = useState(false);
 
+  const isPrivate = settings.privateMode && !isAdmin;
+  const navItems = isPrivate ? PRIVATE_NAV_ITEMS : NAV_ITEMS;
+
   useEffect(() => {
-    if (!isHome) return;
+    if (!isHome || isGlobeHome) return;
     const onScroll = () => {
       setScrolled(window.scrollY > window.innerHeight * 0.6);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
+  }, [isHome, isGlobeHome]);
 
-  const transparent = isHome && !scrolled;
+  const transparent = isMap || isGlobeHome || (isHome && !scrolled);
 
   return (
     <header
@@ -51,7 +74,7 @@ export function SiteHeader({ settings }: { settings: SiteSettings }) {
           <span className="truncate">{settings.name}</span>
         </Link>
         <nav className="flex flex-1 items-center justify-end gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
               <Link

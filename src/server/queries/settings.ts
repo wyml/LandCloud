@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   description: "个人图床相册网站",
   footer: "© PicBed",
   defaultPublic: true,
+  privateMode: false,
+  homepageTemplate: "classic",
 };
 
 const DEFAULT_EXTERNAL_LINK: ExternalLinkSettings = {
@@ -34,6 +36,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     description: (site.description as string) || DEFAULT_SETTINGS.description,
     footer: (site.footer as string) || DEFAULT_SETTINGS.footer,
     defaultPublic: site.default_public !== undefined ? Boolean(site.default_public) : DEFAULT_SETTINGS.defaultPublic,
+    privateMode: site.private_mode !== undefined ? Boolean(site.private_mode) : DEFAULT_SETTINGS.privateMode,
+    homepageTemplate: site.homepage_template === "globe" ? "globe" : "classic",
   };
 }
 

@@ -3,11 +3,27 @@ import Link from "next/link";
 
 import { SectionReveal } from "@/components/site/section-reveal";
 import { listPublicTags } from "@/server/queries/public";
-import { Tag } from "lucide-react";
+import { getSiteSettings } from "@/server/queries/settings";
+import { getSessionUser, isAdminUser } from "@/lib/auth";
+import { Tag, Lock } from "lucide-react";
 
 export const metadata: Metadata = { title: "标签" };
 
 export default async function TagsPage() {
+  const settings = await getSiteSettings();
+  const user = await getSessionUser();
+  const isAdmin = await isAdminUser(user);
+  const isPrivate = settings.privateMode && !isAdmin;
+
+  if (isPrivate) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 opacity-50">
+        <Lock className="h-12 w-12" />
+        <p className="text-lg">站点已开启私密模式</p>
+      </div>
+    );
+  }
+
   const tags = await listPublicTags();
 
   return (
