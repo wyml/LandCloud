@@ -12,6 +12,7 @@ import {
 } from "@/server/actions/images";
 import { ExternalLinks } from "./external-links";
 import { AppSelect } from "@/components/shared/app-select";
+import { LivePhotoPlayer } from "@/components/site/live-photo-player";
 
 interface ImageEditPanelProps {
   image: ImageWithRelations;
@@ -120,14 +121,18 @@ export function ImageEditPanel({
         </div>
 
         <div className="mb-4">
-          <img
-            src={`${siteUrl}/f/${image.id}/thumb_lg`}
-            alt={image.title || image.original_name}
-            className="aspect-video w-full rounded-lg object-cover"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
+          {image.is_live_photo && image.live_photo_video_key ? (
+            <LivePhotoPlayer imageId={image.id} />
+          ) : (
+            <img
+              src={`${siteUrl}/f/${image.id}/thumb_lg`}
+              alt={image.title || image.original_name}
+              className="aspect-video w-full rounded-lg object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-3 text-sm">

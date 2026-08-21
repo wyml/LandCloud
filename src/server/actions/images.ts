@@ -151,3 +151,41 @@ export async function bulkMoveToAlbum(input: { imageIds: string[]; albumId: stri
   if (error) throw new Error(error.message);
   refresh();
 }
+
+export async function bulkRemoveFromAlbum(input: { imageIds: string[]; albumId: string }) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("album_images")
+    .delete()
+    .eq("album_id", input.albumId)
+    .in("image_id", input.imageIds);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
+export async function bulkRemoveTags(input: { imageIds: string[]; tagIds: string[] }) {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("image_tags")
+    .delete()
+    .in("image_id", input.imageIds)
+    .in("tag_id", input.tagIds);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
+export async function bulkReprocess(imageIds: string[]) {
+  await requireAdmin();
+  if (imageIds.length === 0) return;
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("images")
+    .update({ processing_status: "pending" })
+    .in("id", imageIds)
+    .in("processing_status", ["failed", "done"]);
+  if (error) throw new Error(error.message);
+  refresh();
+}

@@ -9,8 +9,10 @@ import {
   DISPLAY_QUALITY,
   THUMB_QUALITY,
   THUMB_SIZES,
+  imagePrefix,
   variantKey,
 } from "@/lib/images/variants";
+import { extractMotionPhoto } from "@/lib/images/motion-photo";
 import { getObjectBuffer, putObject } from "@/lib/s3";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -127,6 +129,30 @@ export async function processImage(imageId: string): Promise<void> {
     const isGif = image.mime === "image/gif";
     const isHeic = image.mime === "image/heic" || image.mime === "image/heif";
 
+    let isLivePhoto = image.is_live_photo;
+    let livePhotoVideoKey: string | null = image.live_photo_video_key;
+
+    if (!isLivePhoto && !isSvg && !isGif && !isHeic) {
+      try {
+        const motionResult = await extractMotionPhoto(original, image.mime);
+        if (motionResult) {
+          const videoId = crypto.randomUUID();
+          const videoKey = `${imagePrefix(videoId)}/original.${motionResult.videoMime === "video/mp4" ? "mp4" : "mov"}`;
+          await putObject(videoKey, motionResult.videoBuffer, motionResult.videoMime);
+          isLivePhoto = true;
+          livePhotoVideoKey = videoKey;
+          await admin
+            .from("images")
+            .update({ is_live_photo: true, live_photo_video_key: videoKey })
+            .eq("id", imageId);
+        }
+      } catch {
+        // Motion Photo 提取失败，继续正常处理
+      }
+    }
+
+    const isVideo = isLivePhoto && livePhotoVideoKey;
+
     let width: number | null = null;
     let height: number | null = null;
     let exifInfo: ReturnType<typeof extractExif> = {
@@ -136,7 +162,67 @@ export async function processImage(imageId: string): Promise<void> {
       takenAt: null,
     };
 
-    if (!isSvg) {
+    if (isVideo) {
+      if (isHeic) {
+        try {
+          exifInfo = extractExif(original);
+        } catch {
+          // HEIC EXIF extraction failed, try from converted JPEG
+        }
+      }
+
+      const processBuffer = isHeic ? await convertHeicToJpeg(original) : original;
+      const meta = await sharp(processBuffer).metadata();
+      width = meta.width ?? null;
+      height = meta.height ?? null;
+
+      if (!isHeic && meta.exif) {
+        exifInfo = extractExif(meta.exif);
+      }
+
+      const display = await sharp(processBuffer)
+        .rotate()
+        .resize({
+          width: DISPLAY_MAX_EDGE,
+          height: DISPLAY_MAX_EDGE,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: DISPLAY_QUALITY })
+        .toBuffer();
+      await putObject(variantKey(image.s3_key, "display", "webp"), display, "image/webp");
+
+      for (const [variant, size] of Object.entries(THUMB_SIZES)) {
+        const source = sharp(processBuffer).rotate();
+        const thumb = await source
+          .resize({
+            width: size,
+            height: size,
+            fit: "inside",
+            withoutEnlargement: false,
+          })
+          .webp({ quality: THUMB_QUALITY })
+          .toBuffer();
+        await putObject(
+          variantKey(image.s3_key, variant as keyof typeof THUMB_SIZES, "webp"),
+          thumb,
+          "image/webp",
+        );
+      }
+
+      const update: Record<string, unknown> = {
+        processing_status: "done",
+        exif: exifInfo.clean,
+      };
+      if (width !== null) update.width = width;
+      if (height !== null) update.height = height;
+      if (exifInfo.gpsLat !== null) update.gps_lat = exifInfo.gpsLat;
+      if (exifInfo.gpsLng !== null) update.gps_lng = exifInfo.gpsLng;
+      if (!image.taken_at && exifInfo.takenAt) update.taken_at = exifInfo.takenAt;
+
+      const { error: updateError } = await admin.from("images").update(update).eq("id", imageId);
+      if (updateError) throw updateError;
+    } else if (!isSvg) {
       if (isHeic) {
         try {
           exifInfo = extractExif(original);

@@ -136,3 +136,27 @@ export async function reorderAlbumImages(input: { albumId: string; orderedImageI
   }
   refresh();
 }
+
+export async function bulkDeleteAlbums(albumIds: string[]) {
+  await requireAdmin();
+  if (albumIds.length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.from("albums").delete().in("id", albumIds);
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
+export async function bulkSetAlbumVisibility(input: {
+  albumIds: string[];
+  visibility: "public" | "private" | "password";
+}) {
+  await requireAdmin();
+  if (input.albumIds.length === 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("albums")
+    .update({ visibility: input.visibility })
+    .in("id", input.albumIds);
+  if (error) throw new Error(error.message);
+  refresh();
+}

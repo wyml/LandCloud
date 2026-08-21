@@ -206,6 +206,9 @@ export function MobileUploadPanel({
         <p className="text-sm opacity-60">
           支持 JPG / PNG / WebP / GIF / AVIF / SVG，单张 ≤50MB，批量 ≤{MAX_BATCH_SIZE} 张
         </p>
+        <p className="text-sm opacity-60">
+          支持自动识别 Google/三星动态照片，Apple 实况照片请同时选择图片和视频
+        </p>
         <input
           ref={inputRef}
           type="file"

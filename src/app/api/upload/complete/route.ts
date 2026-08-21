@@ -14,6 +14,7 @@ interface CompleteBody {
   tagNames?: string[];
   visibility?: "public" | "private" | "password";
   takenAt?: string;
+  videoKey?: string;
 }
 
 export async function POST(request: Request) {
@@ -78,6 +79,8 @@ export async function POST(request: Request) {
       visibility: body.visibility ?? "public",
       taken_at: takenAt,
       processing_status: "pending",
+      is_live_photo: !!body.videoKey,
+      live_photo_video_key: body.videoKey ?? null,
     })
     .select("*")
     .single();

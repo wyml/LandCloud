@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button, Input } from "@heroui/react";
 import type { AlbumListItem } from "@/server/queries/albums";
-import { createAlbum, deleteAlbum, updateAlbum } from "@/server/actions/albums";
+import {
+  bulkDeleteAlbums,
+  bulkSetAlbumVisibility,
+  createAlbum,
+  deleteAlbum,
+  updateAlbum,
+} from "@/server/actions/albums";
 import { AppSelect } from "@/components/shared/app-select";
 
 const VISIBILITY_LABEL: Record<string, string> = {
@@ -50,6 +56,20 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const allSelected = albums.length > 0 && albums.every((a) => selected.has(a.id));
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(albums.map((a) => a.id)));
+  }
+
+  function toggleOne(id: string) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  }
 
   function openEdit(album: AlbumListItem) {
     setEditingId(album.id);
@@ -84,7 +104,12 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">相册管理</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="mr-auto text-2xl font-semibold">相册管理</h1>
+        <Button variant="ghost" size="sm" onPress={toggleAll}>
+          {allSelected ? "取消全选" : "全选"}
+        </Button>
+      </div>
 
       <form
         onSubmit={submit}
@@ -150,14 +175,79 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
         </div>
       </form>
 
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">
+          <span className="font-medium">已选 {selected.size} 个</span>
+          <Button size="sm" variant="ghost" onPress={() => setSelected(new Set())}>
+            取消选择
+          </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
+          <Button
+            size="sm"
+            onPress={async () => {
+              await bulkSetAlbumVisibility({ albumIds: [...selected], visibility: "public" });
+              setSelected(new Set());
+            }}
+          >
+            设为公开
+          </Button>
+          <Button
+            size="sm"
+            onPress={async () => {
+              await bulkSetAlbumVisibility({ albumIds: [...selected], visibility: "private" });
+              setSelected(new Set());
+            }}
+          >
+            设为私密
+          </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
+          <Button
+            size="sm"
+            variant="danger"
+            onPress={async () => {
+              if (window.confirm(`确认删除选中的 ${selected.size} 个相册？仅删除相册，不会删除图片。`)) {
+                await bulkDeleteAlbums([...selected]);
+                setSelected(new Set());
+              }
+            }}
+          >
+            删除
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {albums.map((album) => {
           const cover = coverUrl(album, siteUrl, s3PublicBase);
+          const isSelected = selected.has(album.id);
           return (
             <div
               key={album.id}
-              className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800"
+              className={`relative overflow-hidden rounded-xl border ${
+                isSelected
+                  ? "border-blue-500 ring-2 ring-blue-500/40"
+                  : "border-neutral-200 dark:border-neutral-800"
+              }`}
             >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleOne(album.id);
+                }}
+                aria-label="选择"
+                className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border-2 transition-colors ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-500"
+                    : "border-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
+                }`}
+              >
+                {isSelected && (
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
               <Link href={`/admin/albums/${album.id}`} className="block">
                 <div className="flex h-40 items-center justify-center bg-neutral-100">
                   {cover ? (

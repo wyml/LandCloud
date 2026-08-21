@@ -48,6 +48,20 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const allSelected = images.length > 0 && images.every((i) => selected.has(i.image_id));
+
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(images.map((i) => i.image_id)));
+  }
+
+  function toggleOne(id: string) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  }
 
   const memberIds = new Set(images.map((i) => i.image_id));
   const available = candidates.filter(
@@ -105,6 +119,18 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
   async function removeOne(imageId: string) {
     await removeImagesFromAlbum({ albumId: album.id, imageIds: [imageId] });
     setImages((prev) => prev.filter((i) => i.image_id !== imageId));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(imageId);
+      return next;
+    });
+  }
+
+  async function batchRemove() {
+    const ids = [...selected];
+    await removeImagesFromAlbum({ albumId: album.id, imageIds: ids });
+    setImages((prev) => prev.filter((i) => !selected.has(i.image_id)));
+    setSelected(new Set());
   }
 
   return (
@@ -180,47 +206,99 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">相册内图片（{images.length}）</h2>
-        <Button variant="primary" onPress={() => setPickerOpen(true)}>
-          添加图片
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onPress={toggleAll} isDisabled={images.length === 0}>
+            {allSelected ? "取消全选" : "全选"}
+          </Button>
+          <Button variant="primary" onPress={() => setPickerOpen(true)}>
+            添加图片
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-        {images.map((entry, index) => (
-          <div
-            key={entry.image_id}
-            draggable
-            onDragStart={() => setDraggingId(entry.image_id)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => onDropTo(entry.image_id)}
-            className={`group relative overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100 dark:border-neutral-800 ${
-              draggingId === entry.image_id ? "opacity-40" : ""
-            }`}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">
+          <span className="font-medium">已选 {selected.size} 张</span>
+          <Button size="sm" variant="ghost" onPress={() => setSelected(new Set())}>
+            取消选择
+          </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
+          <Button
+            size="sm"
+            variant="danger"
+            onPress={async () => {
+              if (window.confirm(`确认从相册中移除选中的 ${selected.size} 张图片？`)) {
+                await batchRemove();
+              }
+            }}
           >
-            <div className="aspect-square w-full">
-              <img
-                src={thumbUrl(entry.image_id, siteUrl, s3PublicBase, entry.image.s3_key)}
-                alt={entry.image.title || entry.image.original_name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </div>
-            <span className="absolute left-1 top-1 rounded bg-black/60 px-1.5 text-[10px] text-white">
-              {index + 1}
-            </span>
-            <div className="p-2">
-              <p className="truncate text-xs">{entry.image.title || entry.image.original_name}</p>
-              <p className="text-[10px] opacity-50">拖动排序 · {index + 1}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => removeOne(entry.image_id)}
-              className="absolute right-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+            批量移除
+          </Button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        {images.map((entry, index) => {
+          const isSelected = selected.has(entry.image_id);
+          return (
+            <div
+              key={entry.image_id}
+              draggable
+              onDragStart={() => setDraggingId(entry.image_id)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => onDropTo(entry.image_id)}
+              className={`group relative overflow-hidden rounded-xl border bg-neutral-100 ${
+                draggingId === entry.image_id ? "opacity-40" : ""
+              } ${
+                isSelected
+                  ? "border-blue-500 ring-2 ring-blue-500/40"
+                  : "border-neutral-200 dark:border-neutral-800"
+              }`}
             >
-              移除
-            </button>
-          </div>
-        ))}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleOne(entry.image_id);
+                }}
+                aria-label="选择"
+                className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border-2 transition-colors ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-500"
+                    : "border-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
+                }`}
+              >
+                {isSelected && (
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+              <div className="aspect-square w-full">
+                <img
+                  src={thumbUrl(entry.image_id, siteUrl, s3PublicBase, entry.image.s3_key)}
+                  alt={entry.image.title || entry.image.original_name}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <span className="absolute left-8 top-1 rounded bg-black/60 px-1.5 text-[10px] text-white">
+                {index + 1}
+              </span>
+              <div className="p-2">
+                <p className="truncate text-xs">{entry.image.title || entry.image.original_name}</p>
+                <p className="text-[10px] opacity-50">拖动排序 · {index + 1}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeOne(entry.image_id)}
+                className="absolute right-1 top-1 rounded bg-black/60 px-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                移除
+              </button>
+            </div>
+          );
+        })}
         {images.length === 0 && (
           <p className="col-span-full py-8 text-center opacity-60">相册暂无图片，点击右上角添加</p>
         )}

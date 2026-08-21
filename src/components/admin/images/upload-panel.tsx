@@ -5,9 +5,11 @@ import { Button, Input, Checkbox } from "@heroui/react";
 import type { AlbumOption } from "@/lib/types";
 import {
   ACCEPTED_MIME,
+  LIVE_PHOTO_MIME,
   MAX_BATCH_SIZE,
   MAX_FILE_SIZE,
   isAcceptedMime,
+  isAcceptedLivePhotoMime,
 } from "@/lib/images/variants";
 import { AppSelect } from "@/components/shared/app-select";
 
@@ -39,7 +41,9 @@ function uploadWithProgress(url: string, file: File): Promise<void> {
 
 export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, FileState>>({});
   const [tagInput, setTagInput] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private" | "password">("public");
@@ -61,6 +65,10 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
     }
     const valid: File[] = [];
     for (const f of picked) {
+      if (isAcceptedLivePhotoMime(f.type)) {
+        setVideoFile(f);
+        continue;
+      }
       if (!isAcceptedMime(f.type)) {
         window.alert(`不支持的文件类型: ${f.name} (${f.type})`);
         continue;
@@ -81,6 +89,20 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
     });
   }
 
+  function addVideoFile(file: File | null) {
+    if (file) {
+      if (!isAcceptedLivePhotoMime(file.type)) {
+        window.alert(`不支持的视频类型: ${file.name} (${file.type})`);
+        return;
+      }
+      if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
+        window.alert(`视频文件大小超出限制 (≤50MB): ${file.name}`);
+        return;
+      }
+      setVideoFile(file);
+    }
+  }
+
   function removeFile(key: string) {
     setFiles((prev) => prev.filter((f) => keyOf(f) !== key));
     setStatuses((prev) => {
@@ -99,12 +121,15 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
     setBusy(true);
 
     try {
+      const allFiles = [
+        ...files.map((f) => ({ name: f.name, mime: f.type, size: f.size })),
+        ...(videoFile ? [{ name: videoFile.name, mime: videoFile.type, size: videoFile.size }] : []),
+      ];
+
       const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          files: files.map((f) => ({ name: f.name, mime: f.type, size: f.size })),
-        }),
+        body: JSON.stringify({ files: allFiles }),
       });
       if (!presignRes.ok) {
         const body = await presignRes.json().catch(() => null);
@@ -121,9 +146,10 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
         .map((n) => n.trim())
         .filter(Boolean);
 
+      let signedIndex = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const sig = signed[i];
+        const sig = signed[signedIndex++];
         const key = keyOf(file);
         if (!sig) {
           setStatus(key, { state: "failed", pct: 0, error: "未获取到签名" });
@@ -133,6 +159,15 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
           setStatus(key, { state: "uploading", pct: 5 });
           await uploadWithProgress(sig.url, file);
           setStatus(key, { state: "completing", pct: 100 });
+
+          let videoKey: string | undefined;
+          if (videoFile && i === files.length - 1) {
+            const videoSig = signed[signedIndex++];
+            if (videoSig) {
+              await uploadWithProgress(videoSig.url, videoFile);
+              videoKey = videoSig.key;
+            }
+          }
 
           const completeRes = await fetch("/api/upload/complete", {
             method: "POST",
@@ -145,6 +180,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
               albumIds: [...albumIds],
               tagNames,
               visibility,
+              videoKey,
             }),
           });
           const result = (await completeRes.json().catch(() => null)) as {
@@ -208,6 +244,9 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
         <p className="text-xs opacity-60">
           支持 JPG / PNG / WebP / GIF / AVIF / SVG，单张 ≤50MB，批量 ≤{MAX_BATCH_SIZE} 张
         </p>
+        <p className="text-xs opacity-60">
+          支持自动识别 Google/三星/小米/OPPO/vivo 动态照片
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -215,6 +254,44 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
           accept={Object.keys(ACCEPTED_MIME).join(",")}
           className="hidden"
           onChange={(e) => addFiles(e.target.files)}
+        />
+      </div>
+
+      <div className="mt-3">
+        <div
+          onClick={() => videoInputRef.current?.click()}
+          className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-neutral-300 p-3 text-center text-sm transition-colors hover:border-blue-400 hover:bg-blue-50 dark:border-neutral-700 dark:hover:bg-blue-950/40"
+        >
+          <span className="text-xs opacity-60">
+            Apple 实况照片：点击选择配套的 .mov/.mp4 视频文件（可选）
+          </span>
+          {videoFile && (
+            <span className="ml-auto text-xs text-green-600">
+              已选择: {videoFile.name}
+            </span>
+          )}
+          {videoFile && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setVideoFile(null);
+              }}
+              className="text-xs text-red-500 hover:text-red-700"
+            >
+              移除
+            </button>
+          )}
+        </div>
+        <input
+          ref={videoInputRef}
+          type="file"
+          accept={Object.keys(LIVE_PHOTO_MIME).join(",")}
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            addVideoFile(file);
+          }}
         />
       </div>
 
@@ -310,7 +387,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
 
           <div className="flex gap-2">
             <Button variant="primary" onPress={startUpload} isDisabled={busy}>
-              {busy ? "上传中…" : `开始上传 (${files.length})`}
+              {busy ? "上传中…" : `开始上传 (${files.length}${videoFile ? " + 视频" : ""})`}
             </Button>
             {busy && (
               <Button variant="ghost" onPress={onClose} isDisabled={busy}>

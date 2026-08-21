@@ -4,10 +4,14 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Input, Checkbox } from "@heroui/react";
+import { Aperture } from "lucide-react";
 import type { ImageWithRelations, TagWithCount, AlbumOption } from "@/lib/types";
 import {
   bulkAddTags,
   bulkMoveToAlbum,
+  bulkRemoveFromAlbum,
+  bulkRemoveTags,
+  bulkReprocess,
   bulkSetVisibility,
   deleteImages,
 } from "@/server/actions/images";
@@ -118,6 +122,9 @@ export function ImagesBrowser({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-2xl font-semibold">图片管理</h1>
+        <Button variant="ghost" size="sm" onPress={toggleAll}>
+          {allSelected ? "取消全选" : "全选当前页"}
+        </Button>
         <Button variant="primary" onPress={() => setUploadOpen(true)}>
           上传图片
         </Button>
@@ -238,6 +245,14 @@ export function ImagesBrowser({
           <span className="font-medium">已选 {selected.size} 张</span>
           <Button
             size="sm"
+            variant="ghost"
+            onPress={() => setSelected(new Set())}
+          >
+            取消选择
+          </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
+          <Button
+            size="sm"
             onPress={async () => {
               await bulkSetVisibility({
                 imageIds: [...selected],
@@ -260,16 +275,17 @@ export function ImagesBrowser({
           >
             设为私密
           </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
           <Input
             value={bulkTag}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBulkTag(e.target.value)}
-            placeholder="批量添加标签（逗号分隔）"
-            className="flex-1"
+            placeholder="标签（逗号分隔）"
+            className="w-40"
           />
           <Button
             size="sm"
             onPress={async () => {
-              const names = bulkTag.split(/[,，]/).map((n) => n.trim());
+              const names = bulkTag.split(/[,，]/).map((n) => n.trim()).filter(Boolean);
               if (names.length > 0) {
                 await bulkAddTags({ imageIds: [...selected], tagNames: names });
                 setBulkTag("");
@@ -278,14 +294,15 @@ export function ImagesBrowser({
           >
             加标签
           </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
           <AppSelect
             value={bulkAlbum}
             onChange={setBulkAlbum}
             options={[
-              { value: "", label: "移动到相册…" },
+              { value: "", label: "相册…" },
               ...albums.map((a) => ({ value: a.id, label: a.name })),
             ]}
-            ariaLabel="批量移动到相册"
+            ariaLabel="批量操作相册"
           />
           <Button
             size="sm"
@@ -299,7 +316,33 @@ export function ImagesBrowser({
               }
             }}
           >
-            移动
+            移入
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onPress={async () => {
+              if (bulkAlbum) {
+                await bulkRemoveFromAlbum({
+                  imageIds: [...selected],
+                  albumId: bulkAlbum,
+                });
+                setBulkAlbum("");
+              }
+            }}
+          >
+            移出
+          </Button>
+          <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
+          <Button
+            size="sm"
+            variant="ghost"
+            onPress={async () => {
+              await bulkReprocess([...selected]);
+              setSelected(new Set());
+            }}
+          >
+            重新处理
           </Button>
           <Button
             size="sm"
@@ -343,7 +386,7 @@ export function ImagesBrowser({
                   className="block w-full"
                   aria-label={`编辑 ${image.title || image.original_name}`}
                 >
-                  <div className="aspect-square w-full overflow-hidden">
+                  <div className="relative aspect-square w-full overflow-hidden">
                     <img
                       src={proxyThumb(image)}
                       alt={image.title || image.original_name}
@@ -353,6 +396,12 @@ export function ImagesBrowser({
                         (e.currentTarget as HTMLImageElement).style.opacity = "0.15";
                       }}
                     />
+                    {image.is_live_photo && image.live_photo_video_key && (
+                      <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] text-white backdrop-blur">
+                        <Aperture className="h-3 w-3" />
+                        <span>实况</span>
+                      </div>
+                    )}
                   </div>
                 </button>
                 <div className="p-2">
@@ -375,12 +424,25 @@ export function ImagesBrowser({
                     <span className="opacity-60">👁 {image.view_count}</span>
                   </div>
                 </div>
-                <Checkbox
-                  isSelected={isSelected}
-                  onChange={() => toggleOne(image.id)}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleOne(image.id);
+                  }}
                   aria-label="选择"
-                  className="absolute left-2 top-2"
-                />
+                  className={`absolute left-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border-2 transition-colors ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-white bg-black/30 backdrop-blur-sm hover:bg-black/50"
+                  }`}
+                >
+                  {isSelected && (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
               </div>
             );
           })}

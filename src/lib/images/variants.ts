@@ -35,6 +35,14 @@ export function isAcceptedMime(mime: string): mime is keyof typeof ACCEPTED_MIME
   return mime in ACCEPTED_MIME;
 }
 
+export function isAcceptedLivePhotoMime(mime: string): mime is keyof typeof LIVE_PHOTO_MIME {
+  return mime in LIVE_PHOTO_MIME;
+}
+
+export function isAcceptedFile(mime: string): boolean {
+  return isAcceptedMime(mime) || isAcceptedLivePhotoMime(mime);
+}
+
 export function imagePrefix(imageId: string, date: Date = new Date()): string {
   const yyyy = date.getUTCFullYear();
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
