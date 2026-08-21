@@ -83,11 +83,38 @@ export default function CesiumMap() {
         viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
         viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100_000_000;
 
+        const dataSource = new Cesium.CustomDataSource("photos");
+        viewer.dataSources.add(dataSource);
+
+        dataSource.clustering.enabled = true;
+        dataSource.clustering.pixelRange = 40;
+        dataSource.clustering.minimumClusterSize = 2;
+        dataSource.clustering.clusterEvent.addEventListener(
+          (
+            clusteredEntities: unknown[],
+            cluster: {
+              point: InstanceType<CesiumNS["PointPrimitive"]>;
+              label: InstanceType<CesiumNS["Label"]>;
+            },
+          ) => {
+            cluster.point.show = true;
+            cluster.point.pixelSize = 30;
+            cluster.point.color = Cesium.Color.fromCssColorString("#4f46e5");
+            cluster.point.outlineColor = Cesium.Color.WHITE;
+            cluster.point.outlineWidth = 2;
+            cluster.label.show = true;
+            cluster.label.text = String(clusteredEntities.length);
+            cluster.label.font = "bold 13px sans-serif";
+            cluster.label.fillColor = Cesium.Color.WHITE;
+            cluster.label.pixelOffset = new Cesium.Cartesian2(0, -2);
+          },
+        );
+
         const positions: InstanceType<CesiumNS["Cartesian3"]>[] = [];
         for (const photo of data.photos) {
           const position = Cesium.Cartesian3.fromDegrees(photo.lng, photo.lat);
           positions.push(position);
-          viewer.entities.add({
+          dataSource.entities.add({
             id: photo.id,
             position,
             point: {
@@ -110,35 +137,6 @@ export default function CesiumMap() {
             properties: { imageId: photo.id },
           });
         }
-
-        const clustering = (
-          viewer.entities as unknown as {
-            clustering: InstanceType<CesiumNS["EntityCluster"]>;
-          }
-        ).clustering;
-        clustering.enabled = true;
-        clustering.pixelRange = 40;
-        clustering.minimumClusterSize = 2;
-        clustering.clusterEvent.addEventListener(
-          (
-            clusteredEntities: unknown[],
-            cluster: {
-              point: InstanceType<CesiumNS["PointPrimitive"]>;
-              label: InstanceType<CesiumNS["Label"]>;
-            },
-          ) => {
-            cluster.point.show = true;
-            cluster.point.pixelSize = 30;
-            cluster.point.color = Cesium.Color.fromCssColorString("#4f46e5");
-            cluster.point.outlineColor = Cesium.Color.WHITE;
-            cluster.point.outlineWidth = 2;
-            cluster.label.show = true;
-            cluster.label.text = String(clusteredEntities.length);
-            cluster.label.font = "bold 13px sans-serif";
-            cluster.label.fillColor = Cesium.Color.WHITE;
-            cluster.label.pixelOffset = new Cesium.Cartesian2(0, -2);
-          },
-        );
 
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
         handler.setInputAction(
