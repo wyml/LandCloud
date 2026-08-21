@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, Checkbox, FieldError, Form, Input, Label, TextField } from "@heroui/react";
+import { Button, FieldError, Form, Input, Label, Switch, TextField } from "@heroui/react";
 import type { ExternalLinkSettings, SiteSettings } from "@/lib/types";
 import { updateExternalLinkSettings, updateSiteSettings } from "@/server/actions/settings";
 
@@ -99,29 +99,20 @@ export function SettingsForm({
           <p className="text-xs opacity-60">
             支持 HTML 标签，可用于放置访问统计代码、ICP 备案信息等。
           </p>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">上传图片默认公开</p>
-              <p className="text-xs opacity-60">
-                开启后，新上传的图片默认为公开状态；关闭则默认为私密状态。
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={siteState.defaultPublic}
-              onClick={() => setSiteState((s) => ({ ...s, defaultPublic: !s.defaultPublic }))}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 ${
-                siteState.defaultPublic ? "bg-neutral-900 dark:bg-neutral-100" : "bg-neutral-200 dark:bg-neutral-700"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  siteState.defaultPublic ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
+          <Switch
+            isSelected={siteState.defaultPublic}
+            onChange={(isSelected: boolean) => setSiteState((s) => ({ ...s, defaultPublic: isSelected }))}
+          >
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              上传图片默认公开
+            </Switch.Content>
+          </Switch>
+          <p className="text-xs opacity-60">
+            开启后，新上传的图片默认为公开状态；关闭则默认为私密状态。
+          </p>
           <div className="flex items-center gap-2">
             <Button type="submit" variant="primary" isDisabled={siteStatus === "saving"}>
               {siteStatus === "saving" ? "保存中…" : "保存站点信息"}
