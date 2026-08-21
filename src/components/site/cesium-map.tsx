@@ -9,14 +9,26 @@ type MapData = {
   footprintCount: number;
 };
 
-type CesiumModule = typeof import("cesium");
-type ViewerInstance = InstanceType<CesiumModule["Viewer"]>;
-type Cart3 = InstanceType<CesiumModule["Cartesian3"]>;
-type Cart2 = InstanceType<CesiumModule["Cartesian2"]>;
-type JulianDate = InstanceType<CesiumModule["JulianDate"]>;
+type CesiumNS = typeof import("cesium");
 
-if (typeof window !== "undefined") {
-  (window as unknown as { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL = "/cesium";
+function loadCesiumAssets(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if ((window as unknown as { Cesium?: unknown }).Cesium) {
+      resolve();
+      return;
+    }
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/cesium/widgets.css";
+    document.head.appendChild(link);
+
+    const script = document.createElement("script");
+    script.src = "/cesium/Cesium.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Cesium.js 加载失败"));
+    document.head.appendChild(script);
+  });
 }
 
 export default function CesiumMap() {
@@ -26,7 +38,6 @@ export default function CesiumMap() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let viewer: ViewerInstance | null = null;
     let destroyed = false;
 
     async function init() {
@@ -37,11 +48,15 @@ export default function CesiumMap() {
         if (destroyed) return;
         setStats(data);
 
-        const Cesium = await import("cesium");
-        if (destroyed || !containerRef.current) return;
+        (window as unknown as { CESIUM_BASE_URL?: string }).CESIUM_BASE_URL = "/cesium";
+        await loadCesiumAssets();
+        if (destroyed) return;
+
+        const Cesium = (window as unknown as { Cesium: CesiumNS }).Cesium;
+        if (!containerRef.current) return;
 
         const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
-        viewer = new Cesium.Viewer(containerRef.current, {
+        const viewer = new Cesium.Viewer(containerRef.current, {
           animation: false,
           timeline: false,
           baseLayerPicker: false,
@@ -68,7 +83,7 @@ export default function CesiumMap() {
         viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
         viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100_000_000;
 
-        const positions: Cart3[] = [];
+        const positions: InstanceType<CesiumNS["Cartesian3"]>[] = [];
         for (const photo of data.photos) {
           const position = Cesium.Cartesian3.fromDegrees(photo.lng, photo.lat);
           positions.push(position);
@@ -97,7 +112,9 @@ export default function CesiumMap() {
         }
 
         const clustering = (
-          viewer.entities as unknown as { clustering: InstanceType<CesiumModule["EntityCluster"]> }
+          viewer.entities as unknown as {
+            clustering: InstanceType<CesiumNS["EntityCluster"]>;
+          }
         ).clustering;
         clustering.enabled = true;
         clustering.pixelRange = 40;
@@ -106,8 +123,8 @@ export default function CesiumMap() {
           (
             clusteredEntities: unknown[],
             cluster: {
-              point: InstanceType<CesiumModule["PointPrimitive"]>;
-              label: InstanceType<CesiumModule["Label"]>;
+              point: InstanceType<CesiumNS["PointPrimitive"]>;
+              label: InstanceType<CesiumNS["Label"]>;
             },
           ) => {
             cluster.point.show = true;
@@ -124,35 +141,44 @@ export default function CesiumMap() {
         );
 
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-        handler.setInputAction((movement: { position: Cart2 }) => {
-          const picked = viewer?.scene.pick(movement.position);
-          if (!picked || !picked.id) return;
-          const entity = picked.id as unknown as {
-            cluster?: {
-              clusteredEntities?: Array<{
-                position?: { getValue?: (time: JulianDate) => Cart3 };
-              }>;
+        handler.setInputAction(
+          (movement: { position: InstanceType<CesiumNS["Cartesian2"]> }) => {
+            const picked = viewer?.scene.pick(movement.position);
+            if (!picked || !picked.id) return;
+            const entity = picked.id as unknown as {
+              cluster?: {
+                clusteredEntities?: Array<{
+                  position?: {
+                    getValue?: (
+                      time: InstanceType<CesiumNS["JulianDate"]>,
+                    ) => InstanceType<CesiumNS["Cartesian3"]>;
+                  };
+                }>;
+              };
+              properties?: {
+                getValue?: (
+                  time: InstanceType<CesiumNS["JulianDate"]>,
+                ) => { imageId?: string };
+              };
             };
-            properties?: {
-              getValue?: (time: JulianDate) => { imageId?: string };
-            };
-          };
-          const cluster = entity.cluster;
-          if (cluster?.clusteredEntities?.length) {
-            const points = cluster.clusteredEntities
-              .map((e) => e.position?.getValue?.(Cesium.JulianDate.now()))
-              .filter(Boolean) as Cart3[];
-            if (points.length > 0) {
-              const sphere = Cesium.BoundingSphere.fromPoints(points);
-              viewer?.camera.flyToBoundingSphere(sphere, { duration: 1 });
-              return;
+            const cluster = entity.cluster;
+            if (cluster?.clusteredEntities?.length) {
+              const points = cluster.clusteredEntities
+                .map((e) => e.position?.getValue?.(Cesium.JulianDate.now()))
+                .filter(Boolean) as InstanceType<CesiumNS["Cartesian3"]>[];
+              if (points.length > 0) {
+                const sphere = Cesium.BoundingSphere.fromPoints(points);
+                viewer?.camera.flyToBoundingSphere(sphere, { duration: 1 });
+                return;
+              }
             }
-          }
-          const imageId = entity.properties?.getValue?.(Cesium.JulianDate.now())?.imageId;
-          if (imageId) {
-            router.push(`/images/${imageId}`);
-          }
-        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            const imageId = entity.properties?.getValue?.(Cesium.JulianDate.now())?.imageId;
+            if (imageId) {
+              router.push(`/images/${imageId}`);
+            }
+          },
+          Cesium.ScreenSpaceEventType.LEFT_CLICK,
+        );
 
         if (positions.length > 0) {
           const sphere = Cesium.BoundingSphere.fromPoints(positions);
@@ -160,6 +186,10 @@ export default function CesiumMap() {
           viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(sphere.center, radius), {
             duration: 1.5,
           });
+        }
+
+        if (destroyed) {
+          viewer.destroy();
         }
       } catch (e) {
         if (!destroyed) setError((e as Error).message || "地图加载失败");
@@ -170,10 +200,6 @@ export default function CesiumMap() {
 
     return () => {
       destroyed = true;
-      if (viewer) {
-        viewer.destroy();
-        viewer = null;
-      }
     };
   }, [router]);
 
