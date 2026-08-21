@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export interface AlbumInput {
   name: string;
   description: string;
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
   sortOrder: number;
   password?: string;
 }
@@ -148,7 +148,7 @@ export async function bulkDeleteAlbums(albumIds: string[]) {
 
 export async function bulkSetAlbumVisibility(input: {
   albumIds: string[];
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
 }) {
   await requireAdmin();
   if (input.albumIds.length === 0) return;

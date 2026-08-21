@@ -10,7 +10,7 @@ export async function updateImageDetails(input: {
   id: string;
   title: string;
   description: string;
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
   takenAt: string | null;
 }) {
   await requireAdmin();
@@ -108,7 +108,7 @@ export async function deleteImages(imageIds: string[]) {
 
 export async function bulkSetVisibility(input: {
   imageIds: string[];
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
 }) {
   await requireAdmin();
   const admin = createAdminClient();

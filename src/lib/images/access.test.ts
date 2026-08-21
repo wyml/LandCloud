@@ -8,25 +8,31 @@ import {
 
 describe("canAccessImage", () => {
   it("公开图片允许访问", () => {
-    expect(canAccessImage({ publiclyVisible: true, isAdmin: false, shareGranted: false })).toBe(
+    expect(canAccessImage({ publiclyVisible: true, isAdmin: false, shareGranted: false, isHidden: false })).toBe(
       true,
     );
   });
 
   it("管理员可访问私密图片", () => {
-    expect(canAccessImage({ publiclyVisible: false, isAdmin: true, shareGranted: false })).toBe(
+    expect(canAccessImage({ publiclyVisible: false, isAdmin: true, shareGranted: false, isHidden: false })).toBe(
       true,
     );
   });
 
   it("分享授权可访问私密图片", () => {
-    expect(canAccessImage({ publiclyVisible: false, isAdmin: false, shareGranted: true })).toBe(
+    expect(canAccessImage({ publiclyVisible: false, isAdmin: false, shareGranted: true, isHidden: false })).toBe(
+      true,
+    );
+  });
+
+  it("隐藏图片可通过直链访问", () => {
+    expect(canAccessImage({ publiclyVisible: false, isAdmin: false, shareGranted: false, isHidden: true })).toBe(
       true,
     );
   });
 
   it("无任何授权则拒绝", () => {
-    expect(canAccessImage({ publiclyVisible: false, isAdmin: false, shareGranted: false })).toBe(
+    expect(canAccessImage({ publiclyVisible: false, isAdmin: false, shareGranted: false, isHidden: false })).toBe(
       false,
     );
   });

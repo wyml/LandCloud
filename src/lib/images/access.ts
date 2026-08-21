@@ -7,11 +7,13 @@ export interface AccessDecisionInput {
   isAdmin: boolean;
   /** Whether a valid share grants access to this image directly or via its album. */
   shareGranted: boolean;
+  /** Whether the image is hidden (not listed publicly but accessible via direct link). */
+  isHidden: boolean;
 }
 
-/** 代理路由访问决策：公开 > 管理员 > 分享授权；任一满足即可。 */
+/** 代理路由访问决策：公开 > 隐藏 > 管理员 > 分享授权；任一满足即可。 */
 export function canAccessImage(input: AccessDecisionInput): boolean {
-  return input.publiclyVisible || input.isAdmin || input.shareGranted;
+  return input.publiclyVisible || input.isHidden || input.isAdmin || input.shareGranted;
 }
 
 /** 公开图片给 1 年 immutable 缓存；其余一律 no-store（含私密/加密）。 */

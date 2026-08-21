@@ -58,6 +58,7 @@ const VISIBILITY_LABEL: Record<string, string> = {
   public: "公开",
   private: "私密",
   password: "加密",
+  hidden: "不展示",
 };
 
 function buildQuery(current: ImagesFilters, patch: Partial<ImagesFilters>): string {
@@ -208,6 +209,7 @@ export function ImagesBrowser({
             { value: "public", label: "公开" },
             { value: "private", label: "私密" },
             { value: "password", label: "加密" },
+            { value: "hidden", label: "不展示" },
           ]}
           ariaLabel="按可见性筛选"
         />
@@ -279,6 +281,18 @@ export function ImagesBrowser({
             }}
           >
             设为私密
+          </Button>
+          <Button
+            size="sm"
+            onPress={async () => {
+              await bulkSetVisibility({
+                imageIds: [...selected],
+                visibility: "hidden",
+              });
+              setSelected(new Set());
+            }}
+          >
+            设为不展示
           </Button>
           <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
           <Input

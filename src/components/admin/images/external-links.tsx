@@ -93,6 +93,8 @@ export function ExternalLinks({
 
       {image.visibility === "public" && s3PublicBase ? (
         <p className="text-xs opacity-60">直链与代理链接均可使用。</p>
+      ) : image.visibility === "hidden" ? (
+        <p className="text-xs opacity-60">不展示图片可通过直链或代理链接访问，但不会出现在公开页面。</p>
       ) : (
         <p className="text-xs opacity-60">
           {image.visibility === "public"

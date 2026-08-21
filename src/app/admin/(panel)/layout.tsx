@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button, Toast } from "@heroui/react";
-import { LayoutDashboard, Image, FolderOpen, Tag, Share2, Settings } from "lucide-react";
+import { LayoutDashboard, Image, FolderOpen, Tag, Share2, Settings, ExternalLink } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSiteSettings } from "@/server/queries/settings";
 import { logout } from "@/server/actions/auth";
@@ -36,7 +36,14 @@ export default async function AdminPanelLayout({ children }: LayoutProps<"/admin
             </Link>
           ))}
         </nav>
-        <form action={logout} className="mt-auto">
+        <Link
+          href="/"
+          className="mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800"
+        >
+          <ExternalLink className="h-4 w-4" />
+          返回站点首页
+        </Link>
+        <form action={logout} className="mt-2">
           <Button type="submit" variant="outline" fullWidth>
             退出登录
           </Button>

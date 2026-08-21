@@ -62,7 +62,7 @@ export async function listPublicAlbums(): Promise<PublicAlbum[]> {
   const rows = (albums as unknown as Record<string, unknown>[]) ?? [];
   const counts = await countPublicImagesPerAlbum(rows.map((r) => r.id as string));
 
-  return rows.map((row) => {
+  const albumsWithCover = rows.map((row) => {
     const { cover_image, ...rest } = row;
     void cover_image;
     return {
@@ -71,6 +71,28 @@ export async function listPublicAlbums(): Promise<PublicAlbum[]> {
       cover: (row.cover_image as { id: string; s3_key: string; title: string } | null) ?? null,
     };
   });
+
+  const noCoverIds = albumsWithCover.filter((a) => !a.cover).map((a) => a.id);
+  if (noCoverIds.length > 0) {
+    const { data: latest } = await admin
+      .from("album_images")
+      .select(`album_id, images!inner(id, s3_key, title)`)
+      .in("album_id", noCoverIds)
+      .eq("images.visibility", "public")
+      .eq("images.processing_status", "done");
+    const fallback = new Map<string, { id: string; s3_key: string; title: string }>();
+    for (const row of (latest as unknown as Array<{
+      album_id: string;
+      images: { id: string; s3_key: string; title: string };
+    }>) ?? []) {
+      if (!fallback.has(row.album_id)) fallback.set(row.album_id, row.images);
+    }
+    for (const album of albumsWithCover) {
+      if (!album.cover && fallback.has(album.id)) album.cover = fallback.get(album.id)!;
+    }
+  }
+
+  return albumsWithCover;
 }
 
 async function countPublicImagesPerAlbum(albumIds: string[]): Promise<Map<string, number>> {
@@ -123,7 +145,9 @@ export async function getPublicAlbumDetail(id: string): Promise<{
     album: {
       ...(row as unknown as Omit<PublicAlbum, "imageCount" | "cover">),
       imageCount: images.length,
-      cover: (row.cover_image as { id: string; s3_key: string; title: string } | null) ?? null,
+      cover:
+        (row.cover_image as { id: string; s3_key: string; title: string } | null) ??
+        (images[0] ? { id: images[0].id, s3_key: images[0].s3_key, title: images[0].title } : null),
     },
     images,
   };
@@ -181,6 +205,27 @@ export async function listRecentPublicImages(limit = 30): Promise<PublicImage[]>
     .limit(limit);
   if (error) throw new Error(error.message);
   return ((data as unknown as ImageSelectShape[]) ?? []).map(toPublicImage);
+}
+
+export async function listRandomPublicImages(): Promise<PublicImage | null> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("images")
+    .select("id", { count: "exact", head: true })
+    .eq("visibility", "public")
+    .eq("processing_status", "done");
+  if (!count || count <= 0) return null;
+
+  const offset = Math.max(0, Math.floor(Math.random() * count));
+  const { data, error } = await admin
+    .from("images")
+    .select(PUBLIC_IMAGE_COLUMNS)
+    .eq("visibility", "public")
+    .eq("processing_status", "done")
+    .order("created_at", { ascending: false })
+    .range(offset, offset);
+  if (error) throw new Error(error.message);
+  return ((data as unknown as ImageSelectShape[]) ?? []).map(toPublicImage)[0] ?? null;
 }
 
 export interface PublicImageDetail extends PublicImage {
@@ -338,6 +383,26 @@ export async function searchPublic(query: string): Promise<PublicSearchResult> {
     imageCount: counts.get(row.id as string) ?? 0,
     cover: (row.cover_image as { id: string; s3_key: string; title: string } | null) ?? null,
   }));
+
+  const noCoverIds = albums.filter((a) => !a.cover).map((a) => a.id);
+  if (noCoverIds.length > 0) {
+    const { data: latest } = await admin
+      .from("album_images")
+      .select(`album_id, images!inner(id, s3_key, title)`)
+      .in("album_id", noCoverIds)
+      .eq("images.visibility", "public")
+      .eq("images.processing_status", "done");
+    const fallback = new Map<string, { id: string; s3_key: string; title: string }>();
+    for (const row of (latest as unknown as Array<{
+      album_id: string;
+      images: { id: string; s3_key: string; title: string };
+    }>) ?? []) {
+      if (!fallback.has(row.album_id)) fallback.set(row.album_id, row.images);
+    }
+    for (const album of albums) {
+      if (!album.cover && fallback.has(album.id)) album.cover = fallback.get(album.id)!;
+    }
+  }
 
   return { images: uniqueImages, albums };
 }

@@ -160,6 +160,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
               { value: "public", label: "公开" },
               { value: "private", label: "私密" },
               { value: "password", label: "加密" },
+              { value: "hidden", label: "不展示" },
             ]}
             ariaLabel="相册可见性"
           />

@@ -9,7 +9,7 @@ export interface ImageRow {
   height: number | null;
   sha256: string;
   s3_key: string;
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
   taken_at: string | null;
   exif: Record<string, unknown>;
   gps_lat: number | null;
@@ -27,7 +27,7 @@ export interface AlbumRow {
   name: string;
   description: string;
   cover_image_id: string | null;
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
   sort_order: number;
   view_count: number;
   created_at: string;

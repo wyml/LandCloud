@@ -166,6 +166,7 @@ export function ImageEditPanel({
                   { value: "public", label: "公开" },
                   { value: "private", label: "私密" },
                   { value: "password", label: "加密" },
+                  { value: "hidden", label: "不展示" },
                 ]}
                 ariaLabel="图片可见性"
                 fullWidth

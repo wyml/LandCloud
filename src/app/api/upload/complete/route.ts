@@ -13,7 +13,7 @@ interface CompleteBody {
   size: number;
   albumIds?: string[];
   tagNames?: string[];
-  visibility?: "public" | "private" | "password";
+  visibility?: "public" | "private" | "password" | "hidden";
   takenAt?: string;
   videoKey?: string;
 }

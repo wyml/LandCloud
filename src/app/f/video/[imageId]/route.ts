@@ -64,16 +64,17 @@ export async function GET(
   }
 
   const publiclyVisible = await isImagePubliclyVisible(image);
+  const isHidden = image.visibility === "hidden";
 
   let isAdmin = false;
-  if (!publiclyVisible) {
+  if (!publiclyVisible && !isHidden) {
     const supabase = await createClient();
     const { data: session } = await supabase.auth.getUser();
     isAdmin = isAdminUser(session.user);
   }
-  const shareGranted = !publiclyVisible && !isAdmin ? await hasShareAccess(admin, imageId) : false;
+  const shareGranted = !publiclyVisible && !isHidden && !isAdmin ? await hasShareAccess(admin, imageId) : false;
 
-  if (!canAccessImage({ publiclyVisible, isAdmin, shareGranted })) {
+  if (!canAccessImage({ publiclyVisible, isAdmin, shareGranted, isHidden })) {
     return new NextResponse("Not found", { status: 404 });
   }
 

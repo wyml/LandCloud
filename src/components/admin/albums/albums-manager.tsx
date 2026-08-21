@@ -20,6 +20,7 @@ const VISIBILITY_LABEL: Record<string, string> = {
   public: "公开",
   private: "私密",
   password: "加密",
+  hidden: "不展示",
 };
 
 function coverUrl(album: AlbumListItem, siteUrl: string, s3PublicBase: string | null) {
@@ -34,7 +35,7 @@ function coverUrl(album: AlbumListItem, siteUrl: string, s3PublicBase: string | 
 interface AlbumFormState {
   name: string;
   description: string;
-  visibility: "public" | "private" | "password";
+  visibility: "public" | "private" | "password" | "hidden";
   sortOrder: number;
   password: string;
 }
@@ -134,6 +135,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
               { value: "public", label: "公开" },
               { value: "private", label: "私密" },
               { value: "password", label: "加密" },
+              { value: "hidden", label: "不展示" },
             ]}
             ariaLabel="相册可见性"
           />
@@ -202,6 +204,15 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
             }}
           >
             设为私密
+          </Button>
+          <Button
+            size="sm"
+            onPress={async () => {
+              await bulkSetAlbumVisibility({ albumIds: [...selected], visibility: "hidden" });
+              setSelected(new Set());
+            }}
+          >
+            设为不展示
           </Button>
           <div className="h-4 w-px bg-amber-300 dark:bg-amber-700" />
           <Button
