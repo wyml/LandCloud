@@ -1,15 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type MapData = {
-  photos: Array<{ id: string; title: string; lat: number; lng: number; taken_at: string | null }>;
-  locatedCount: number;
-  footprintCount: number;
-};
-
+type MapPhoto = { id: string; title: string; lat: number; lng: number; taken_at: string | null };
+type MapData = { photos: MapPhoto[]; locatedCount: number; footprintCount: number };
 type CesiumNS = typeof import("cesium");
+
+interface TooltipPhoto {
+  id: string;
+  title: string;
+}
+
+interface TooltipState {
+  x: number;
+  y: number;
+  photos: TooltipPhoto[];
+  isCluster: boolean;
+}
 
 function loadCesiumAssets(): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -31,11 +40,39 @@ function loadCesiumAssets(): Promise<void> {
   });
 }
 
+function extractPhotos(entity: unknown): TooltipPhoto[] {
+  const e = entity as {
+    cluster?: { clusteredEntities?: Array<{ id: string; properties?: { getValue?: (t?: unknown) => { imageId?: string; title?: string } } }> };
+    id?: string;
+    properties?: { getValue?: (t?: unknown) => { imageId?: string; title?: string } };
+  };
+  if (e.cluster?.clusteredEntities?.length) {
+    return e.cluster.clusteredEntities.map((ce) => ({
+      id: ce.id,
+      title: ce.properties?.getValue?.()?.title ?? "",
+    }));
+  }
+  const props = e.properties?.getValue?.();
+  if (props?.imageId) {
+    return [{ id: props.imageId, title: props.title ?? "" }];
+  }
+  return [];
+}
+
 export default function CesiumMap() {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [stats, setStats] = useState<MapData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const tooltipRef = useRef<TooltipState | null>(null);
+  const viewerRef = useRef<InstanceType<CesiumNS["Viewer"]> | null>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const syncTooltip = useCallback((state: TooltipState | null) => {
+    tooltipRef.current = state;
+    setTooltip(state);
+  }, []);
 
   useEffect(() => {
     let destroyed = false;
@@ -79,6 +116,7 @@ export default function CesiumMap() {
                 }),
               ),
         });
+        viewerRef.current = viewer;
 
         viewer.scene.screenSpaceCameraController.minimumZoomDistance = 500;
         viewer.scene.screenSpaceCameraController.maximumZoomDistance = 100_000_000;
@@ -110,10 +148,12 @@ export default function CesiumMap() {
           },
         );
 
+        const photoMap = new Map<string, MapPhoto>();
         const positions: InstanceType<CesiumNS["Cartesian3"]>[] = [];
         for (const photo of data.photos) {
           const position = Cesium.Cartesian3.fromDegrees(photo.lng, photo.lat);
           positions.push(position);
+          photoMap.set(photo.id, photo);
           dataSource.entities.add({
             id: photo.id,
             position,
@@ -134,49 +174,97 @@ export default function CesiumMap() {
               outlineWidth: 3,
               outlineColor: Cesium.Color.BLACK,
             },
-            properties: { imageId: photo.id },
+            properties: { imageId: photo.id, title: photo.title },
+          });
+        }
+
+        function showTooltip(entity: unknown, screenPos: { x: number; y: number }) {
+          const photos = extractPhotos(entity);
+          if (photos.length === 0) {
+            syncTooltip(null);
+            return;
+          }
+          const isCluster = !!(entity as { cluster?: unknown }).cluster;
+          syncTooltip({
+            x: screenPos.x,
+            y: screenPos.y,
+            photos,
+            isCluster,
           });
         }
 
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+        handler.setInputAction(
+          (movement: { endPosition: InstanceType<CesiumNS["Cartesian2"]> }) => {
+            if (tooltipRef.current) return;
+            const picked = viewer.scene.pick(movement.endPosition);
+            if (!picked || !picked.id) return;
+            const entity = picked.id;
+            if (entity.cluster?.clusteredEntities?.length || entity.properties?.getValue?.()?.imageId) {
+              if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+              hoverTimerRef.current = setTimeout(() => {
+                showTooltip(entity, { x: movement.endPosition.x, y: movement.endPosition.y });
+              }, 200);
+            }
+          },
+          Cesium.ScreenSpaceEventType.MOUSE_MOVE,
+        );
+
         handler.setInputAction(
           (movement: { position: InstanceType<CesiumNS["Cartesian2"]> }) => {
-            const picked = viewer?.scene.pick(movement.position);
-            if (!picked || !picked.id) return;
-            const entity = picked.id as unknown as {
-              cluster?: {
-                clusteredEntities?: Array<{
-                  position?: {
-                    getValue?: (
-                      time: InstanceType<CesiumNS["JulianDate"]>,
-                    ) => InstanceType<CesiumNS["Cartesian3"]>;
-                  };
-                }>;
-              };
-              properties?: {
-                getValue?: (
-                  time: InstanceType<CesiumNS["JulianDate"]>,
-                ) => { imageId?: string };
-              };
-            };
+            if (hoverTimerRef.current) {
+              clearTimeout(hoverTimerRef.current);
+              hoverTimerRef.current = null;
+            }
+            const picked = viewer.scene.pick(movement.position);
+            if (!picked || !picked.id) {
+              syncTooltip(null);
+              return;
+            }
+            const entity = picked.id;
             const cluster = entity.cluster;
             if (cluster?.clusteredEntities?.length) {
+              showTooltip(entity, { x: movement.position.x, y: movement.position.y });
               const points = cluster.clusteredEntities
-                .map((e) => e.position?.getValue?.(Cesium.JulianDate.now()))
+                .map((e: { position?: { getValue?: (t: unknown) => InstanceType<CesiumNS["Cartesian3"]> } }) =>
+                  e.position?.getValue?.(Cesium.JulianDate.now()),
+                )
                 .filter(Boolean) as InstanceType<CesiumNS["Cartesian3"]>[];
               if (points.length > 0) {
                 const sphere = Cesium.BoundingSphere.fromPoints(points);
-                viewer?.camera.flyToBoundingSphere(sphere, { duration: 1 });
-                return;
+                viewer.camera.flyToBoundingSphere(sphere, { duration: 1 });
               }
+              return;
             }
-            const imageId = entity.properties?.getValue?.(Cesium.JulianDate.now())?.imageId;
-            if (imageId) {
-              router.push(`/images/${imageId}`);
+            const props = entity.properties?.getValue?.(Cesium.JulianDate.now());
+            if (props?.imageId) {
+              showTooltip(entity, { x: movement.position.x, y: movement.position.y });
             }
           },
           Cesium.ScreenSpaceEventType.LEFT_CLICK,
         );
+
+        viewer.scene.postRender.addEventListener(() => {
+          const current = tooltipRef.current;
+          if (!current || current.photos.length === 0) return;
+          const firstPhoto = current.photos[0];
+          const photo = photoMap.get(firstPhoto.id);
+          if (!photo) return;
+          const worldPos = Cesium.Cartesian3.fromDegrees(photo.lng, photo.lat);
+          const canvasPos = Cesium.SceneTransforms.worldToWindowCoordinates(viewer.scene, worldPos);
+          if (canvasPos) {
+            const newX = Math.round(canvasPos.x);
+            const newY = Math.round(canvasPos.y);
+            if (Math.abs(newX - current.x) > 1 || Math.abs(newY - current.y) > 1) {
+              syncTooltip({ ...current, x: newX, y: newY });
+            }
+          }
+        });
+
+        viewer.camera.changed.addEventListener(() => {
+          syncTooltip(null);
+        });
 
         if (positions.length > 0) {
           const sphere = Cesium.BoundingSphere.fromPoints(positions);
@@ -198,8 +286,9 @@ export default function CesiumMap() {
 
     return () => {
       destroyed = true;
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
     };
-  }, [router]);
+  }, [router, syncTooltip]);
 
   return (
     <div className="relative">
@@ -219,8 +308,68 @@ export default function CesiumMap() {
         </div>
       ) : null}
       <div ref={containerRef} className="h-[70vh] w-full overflow-hidden rounded-xl" />
+
+      {tooltip && tooltip.photos.length > 0 && (
+        <div
+          className="pointer-events-auto absolute z-20"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: "translate(-50%, -100%) translateY(-14px)",
+          }}
+        >
+          <div
+            className="w-[300px] max-h-[220px] overflow-hidden rounded-xl border border-neutral-200 bg-white/95 shadow-2xl backdrop-blur-md dark:border-neutral-700 dark:bg-neutral-900/95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-1.5 dark:border-neutral-800">
+              <span className="text-xs font-medium opacity-70">
+                {tooltip.isCluster
+                  ? `${tooltip.photos.length} 张照片`
+                  : tooltip.photos[0]?.title || "照片"}
+              </span>
+              <button
+                type="button"
+                onClick={() => syncTooltip(null)}
+                className="text-xs opacity-40 hover:opacity-100"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid max-h-[170px] grid-cols-3 gap-1 overflow-y-auto p-2">
+              {tooltip.photos.slice(0, 12).map((photo) => (
+                <Link
+                  key={photo.id}
+                  href={`/images/${photo.id}`}
+                  className="group aspect-square overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/f/${photo.id}/thumb_sm`}
+                    alt={photo.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                </Link>
+              ))}
+            </div>
+            {tooltip.photos.length > 12 && (
+              <p className="border-t border-neutral-100 px-3 py-1 text-center text-[10px] opacity-40 dark:border-neutral-800">
+                还有 {tooltip.photos.length - 12} 张…
+              </p>
+            )}
+          </div>
+          {/* Arrow pointer */}
+          <div className="flex justify-center">
+            <div className="h-2 w-4 -translate-y-px rotate-180 overflow-hidden">
+              <div className="h-3 w-3 translate-x-[3px] translate-y-[-4px] rotate-45 border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900" />
+            </div>
+          </div>
+        </div>
+      )}
+
       <p className="mt-2 text-center text-xs opacity-50">
-        小屏设备可双指缩放 / 拖动；点击点位查看照片详情，点击聚合圆缩放展开
+        桌面端悬停查看预览，点击聚合圆缩放展开；点击图片查看详情
       </p>
     </div>
   );
