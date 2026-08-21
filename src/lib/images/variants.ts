@@ -5,6 +5,13 @@ export const ACCEPTED_MIME: Record<string, string> = {
   "image/gif": "gif",
   "image/avif": "avif",
   "image/svg+xml": "svg",
+  "image/heic": "heic",
+  "image/heif": "heif",
+};
+
+export const LIVE_PHOTO_MIME: Record<string, string> = {
+  "video/quicktime": "mov",
+  "video/mp4": "mp4",
 };
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -66,6 +73,8 @@ export function detectMimeByMagic(buffer: Buffer): string | null {
   if (buffer.subarray(4, 8).toString("ascii") === "ftyp") {
     const brand = buffer.subarray(8, 12).toString("ascii");
     if (brand === "avif" || brand === "avis") return "image/avif";
+    if (brand === "heic" || brand === "heix" || brand === "mif1") return "image/heic";
+    if (brand === "heim" || brand === "heis") return "image/heif";
   }
   const head = buffer.subarray(0, 1024).toString("utf8").trim();
   if (head.startsWith("<?xml") || head.startsWith("<svg")) {

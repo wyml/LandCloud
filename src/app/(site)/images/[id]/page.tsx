@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ViewTracker } from "@/components/site/view-tracker";
+import { LivePhotoPlayer } from "@/components/site/live-photo-player";
 import { getNeighborImageIds, getPublicImage } from "@/server/queries/public";
 import { getExternalLinkSettings } from "@/server/queries/settings";
 import { getS3PublicBase, getSiteUrl } from "@/lib/env";
@@ -85,11 +86,15 @@ export default async function ImageDetailPage({ params }: PageProps<"/images/[id
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <div className="min-w-0 flex-1 overflow-hidden rounded-xl bg-neutral-100">
-          <img
-            src={`/f/${id}/display`}
-            alt={image.title || image.original_name}
-            className="h-auto w-full"
-          />
+          {image.is_live_photo && image.live_photo_video_key ? (
+            <LivePhotoPlayer imageId={id} />
+          ) : (
+            <img
+              src={`/f/${id}/display`}
+              alt={image.title || image.original_name}
+              className="h-auto w-full"
+            />
+          )}
           <div className="flex items-center gap-4 border-t border-neutral-200 p-3 text-sm dark:border-neutral-800">
             <a
               href={`/f/${id}/original`}

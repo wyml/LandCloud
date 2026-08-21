@@ -16,10 +16,12 @@ interface ImageSelectShape {
   view_count: number;
   gps_lat: number | null;
   gps_lng: number | null;
+  is_live_photo: boolean;
+  live_photo_video_key: string | null;
 }
 
 const PUBLIC_IMAGE_COLUMNS =
-  "id, title, description, original_name, mime, width, height, s3_key, taken_at, view_count, gps_lat, gps_lng";
+  "id, title, description, original_name, mime, width, height, s3_key, taken_at, view_count, gps_lat, gps_lng, is_live_photo, live_photo_video_key";
 
 function toPublicImage(row: ImageSelectShape): PublicImage {
   return row;

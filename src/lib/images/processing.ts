@@ -2,6 +2,7 @@ import "server-only";
 
 import crypto from "node:crypto";
 import exifReader from "exif-reader";
+import heicConvert from "heic-convert";
 import sharp from "sharp";
 import {
   DISPLAY_MAX_EDGE,
@@ -90,6 +91,15 @@ function extractExif(buffer: Buffer): {
   };
 }
 
+async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
+  const output = await heicConvert({
+    buffer: buffer as unknown as ArrayBuffer,
+    format: "JPEG",
+    quality: 0.9,
+  });
+  return Buffer.from(output as unknown as ArrayBuffer);
+}
+
 export async function processImage(imageId: string): Promise<void> {
   const admin = createAdminClient();
 
@@ -104,6 +114,12 @@ export async function processImage(imageId: string): Promise<void> {
     const original: Buffer = await getObjectBuffer(image.s3_key);
     const isSvg = image.mime === "image/svg+xml";
     const isGif = image.mime === "image/gif";
+    const isHeic = image.mime === "image/heic" || image.mime === "image/heif";
+
+    let processBuffer = original;
+    if (isHeic) {
+      processBuffer = await convertHeicToJpeg(original);
+    }
 
     let width: number | null = null;
     let height: number | null = null;
@@ -115,7 +131,7 @@ export async function processImage(imageId: string): Promise<void> {
     };
 
     if (!isSvg) {
-      const meta = await sharp(original).metadata();
+      const meta = await sharp(processBuffer).metadata();
       width = meta.width ?? null;
       height = meta.height ?? null;
       if (meta.exif) {
@@ -124,7 +140,7 @@ export async function processImage(imageId: string): Promise<void> {
     }
 
     if (!isGif && !isSvg) {
-      const display = await sharp(original)
+      const display = await sharp(processBuffer)
         .rotate()
         .resize({
           width: DISPLAY_MAX_EDGE,
@@ -138,7 +154,7 @@ export async function processImage(imageId: string): Promise<void> {
     }
 
     for (const [variant, size] of Object.entries(THUMB_SIZES)) {
-      const source = isSvg ? sharp(original, { density: 96 }) : sharp(original).rotate();
+      const source = isSvg ? sharp(processBuffer, { density: 96 }) : sharp(processBuffer).rotate();
       const thumb = await source
         .resize({
           width: size,
@@ -156,7 +172,7 @@ export async function processImage(imageId: string): Promise<void> {
     }
 
     if (isSvg) {
-      const meta = await sharp(original, { density: 96 }).metadata();
+      const meta = await sharp(processBuffer, { density: 96 }).metadata();
       width = meta.width ?? null;
       height = meta.height ?? null;
     }

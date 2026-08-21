@@ -16,6 +16,8 @@ export interface ImageRow {
   gps_lng: number | null;
   view_count: number;
   processing_status: "pending" | "processing" | "done" | "failed";
+  is_live_photo: boolean;
+  live_photo_video_key: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -78,6 +80,8 @@ export interface PublicImage {
   view_count: number;
   gps_lat: number | null;
   gps_lng: number | null;
+  is_live_photo: boolean;
+  live_photo_video_key: string | null;
 }
 
 export interface PublicAlbum {

@@ -3,16 +3,13 @@ import { cookies } from "next/headers";
 
 import { isAdminUser } from "@/lib/auth";
 import { verifyShareToken } from "@/lib/security";
-import { canAccessImage, proxyCacheControl, resolveVariantObject } from "@/lib/images/access";
+import { canAccessImage, proxyCacheControl } from "@/lib/images/access";
 import { isImagePubliclyVisible } from "@/server/queries/public";
-import type { Variant } from "@/lib/images/variants";
-import { getObjectBuffer, objectExists } from "@/lib/s3";
+import { getObjectBuffer } from "@/lib/s3";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-const VARIANT_SET = new Set<Variant>(["original", "display", "thumb_lg", "thumb_md", "thumb_sm"]);
 
 async function hasShareAccess(
   admin: ReturnType<typeof createAdminClient>,
@@ -49,20 +46,20 @@ async function hasShareAccess(
   return (members?.length ?? 0) > 0;
 }
 
-export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[variant]">) {
-  const { id, variant: variantParam } = await params;
-  if (!VARIANT_SET.has(variantParam as Variant)) {
-    return new NextResponse("Not found", { status: 404 });
-  }
-  const variant = variantParam as Variant;
+export async function GET(
+  _request: Request,
+  { params }: RouteContext<"/f/video/[imageId]">,
+) {
+  const { imageId } = await params;
 
   const admin = createAdminClient();
   const { data: image } = await admin
     .from("images")
-    .select("id, s3_key, mime, visibility, processing_status, is_live_photo, live_photo_video_key")
-    .eq("id", id)
+    .select("id, visibility, processing_status, is_live_photo, live_photo_video_key")
+    .eq("id", imageId)
+    .eq("is_live_photo", true)
     .maybeSingle();
-  if (!image) {
+  if (!image || !image.live_photo_video_key) {
     return new NextResponse("Not found", { status: 404 });
   }
 
@@ -74,40 +71,17 @@ export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[
     const { data: session } = await supabase.auth.getUser();
     isAdmin = isAdminUser(session.user);
   }
-  const shareGranted = !publiclyVisible && !isAdmin ? await hasShareAccess(admin, id) : false;
+  const shareGranted = !publiclyVisible && !isAdmin ? await hasShareAccess(admin, imageId) : false;
 
   if (!canAccessImage({ publiclyVisible, isAdmin, shareGranted })) {
     return new NextResponse("Not found", { status: 404 });
   }
 
-  let key: string;
-  let contentType: string;
-
-  if (variant === "original") {
-    key = image.s3_key;
-    contentType = image.mime;
-  } else {
-    const resolved = await resolveVariantObject({
-      s3Key: image.s3_key,
-      mime: image.mime,
-      variant,
-      resolver: async (candidate) => {
-        const exists = await objectExists(candidate);
-        return exists ?? null;
-      },
-    });
-    if (!resolved) {
-      return new NextResponse("Not found", { status: 404 });
-    }
-    key = resolved.key;
-    contentType = resolved.contentType;
-  }
-
   try {
-    const buffer = await getObjectBuffer(key);
+    const buffer = await getObjectBuffer(image.live_photo_video_key);
     return new NextResponse(buffer as unknown as BodyInit, {
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": "video/quicktime",
         "Cache-Control": proxyCacheControl(publiclyVisible),
         "X-Content-Type-Options": "nosniff",
         "Content-Length": String(buffer.length),
