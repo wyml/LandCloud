@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 export function ViewTracker({ type, id }: { type: "image" | "album"; id: string }) {
   useEffect(() => {
-    const key = `picbed_view_${type}_${id}`;
+    const key = `landcloud_view_${type}_${id}`;
     try {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, "1");

@@ -40,7 +40,7 @@
 | 公开图强缓存、私密 no-store     | ✅   | `proxyCacheControl()`；单测覆盖                        |
 | 分享密码限频（5 次/分/IP）      | ✅   | `src/lib/rate-limit.ts` + `rate_limits` 表（`0004`）   |
 | 分享 cookie HMAC 签名 + 24h TTL | ✅   | `src/lib/security.ts`（13 项单测）                     |
-| 相册密码 scrypt 哈希            | ✅   | `hashAlbumPassword()`（salt=`picbed-album-{id}`）      |
+| 相册密码 scrypt 哈希            | ✅   | `hashAlbumPassword()`（salt=`landcloud-album-{id}`）  |
 | 过期/撤销即时失效               | ✅   | 查询时校验 `revoked`/`expires_at`，无需定时任务        |
 
 ## 5. 其它

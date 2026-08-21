@@ -8,7 +8,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Project: PicBed
+# Project: LandCloud
 
 Commands: `npm run dev` / `npm run build` / `npm run lint` / `npm run typecheck`.
 Docs: `docs/PRD.md` (requirements), `docs/MILESTONES.md` (plan). Next.js 16 breaking changes: async cookies/params/searchParams, `proxy.ts` instead of `middleware.ts`, use `PageProps`/`LayoutProps`/`RouteContext` type helpers.

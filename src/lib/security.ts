@@ -5,7 +5,7 @@ function sessionSecret(): string {
 }
 
 export function hashAlbumPassword(password: string, albumId: string): string {
-  return crypto.scryptSync(password, `picbed-album-${albumId}`, 64).toString("hex");
+  return crypto.scryptSync(password, `landcloud-album-${albumId}`, 64).toString("hex");
 }
 
 export function verifyAlbumPassword(
@@ -21,7 +21,7 @@ export function verifyAlbumPassword(
 }
 
 export function hashSharePassword(password: string, shareId: string): string {
-  return crypto.scryptSync(password, `picbed-share-${shareId}`, 64).toString("hex");
+  return crypto.scryptSync(password, `landcloud-share-${shareId}`, 64).toString("hex");
 }
 
 export function verifySharePassword(

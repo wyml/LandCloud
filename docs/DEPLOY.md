@@ -1,6 +1,6 @@
 # 部署指南
 
-本文档涵盖 PicBed 的生产环境部署流程，包括 Supabase、S3 存储、Vercel 三部分配置。
+本文档涵盖 LandCloud 的生产环境部署流程，包括 Supabase、S3 存储、Vercel 三部分配置。
 
 ---
 
@@ -46,7 +46,7 @@ supabase db push
 
 ### 2.4 配置 Storage Bucket
 
-1. 进入 **Storage** 页面，创建 Bucket（如 `picbed`）
+1. 进入 **Storage** 页面，创建 Bucket（如 `landcloud`）
 2. 设置为 **Public**（如果需要直链访问）或保持 Private（通过代理访问）
 
 ---
@@ -162,7 +162,7 @@ CMD ["node", "server.js"]
 
 ```bash
 npm run build
-pm2 start npm --name "picbed" -- start
+pm2 start npm --name "landcloud" -- start
 pm2 save
 ```
 

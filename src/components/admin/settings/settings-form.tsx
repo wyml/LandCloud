@@ -69,7 +69,7 @@ export function SettingsForm({
             isRequired
           >
             <Label>站点名称</Label>
-            <Input placeholder="PicBed 个人图床" />
+            <Input placeholder="LandCloud" />
             <FieldError />
           </TextField>
           <TextField
@@ -96,7 +96,7 @@ export function SettingsForm({
             onChange={(v: string) => setSiteState((s) => ({ ...s, footer: v }))}
           >
             <Label>页脚文案（支持 HTML）</Label>
-            <Input placeholder="© PicBed" />
+            <Input placeholder="© LandCloud" />
             <FieldError />
           </TextField>
           <p className="text-xs opacity-60">

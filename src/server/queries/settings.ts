@@ -4,10 +4,10 @@ import type { ExternalLinkSettings, SiteSettings } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const DEFAULT_SETTINGS: SiteSettings = {
-  name: "PicBed 个人图床",
+  name: "LandCloud",
   logo: "",
   description: "个人图床相册网站",
-  footer: "© PicBed",
+  footer: "© LandCloud",
   defaultPublic: true,
   privateMode: false,
   homepageTemplate: "classic",
