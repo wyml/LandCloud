@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, Input } from "@heroui/react";
+import { Check } from "lucide-react";
 import { createMobileUploadToken } from "@/server/actions/mobile-upload";
 
 interface MobileUploadToken {
@@ -95,7 +96,7 @@ export function MobileUploadDialog() {
                 className="min-w-0 flex-1"
               />
               <Button variant="ghost" size="sm" onPress={copyUrl}>
-                {copied ? "已复制" : "复制"}
+                {copied ? <Check className="h-4 w-4" /> : "复制"}
               </Button>
             </div>
           </>

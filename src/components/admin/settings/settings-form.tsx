@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button, FieldError, Form, Input, Label, TextField } from "@heroui/react";
+import { Button, Checkbox, FieldError, Form, Input, Label, TextField } from "@heroui/react";
 import type { ExternalLinkSettings, SiteSettings } from "@/lib/types";
 import { updateExternalLinkSettings, updateSiteSettings } from "@/server/actions/settings";
 
@@ -98,6 +98,15 @@ export function SettingsForm({
           </TextField>
           <p className="text-xs opacity-60">
             支持 HTML 标签，可用于放置访问统计代码、ICP 备案信息等。
+          </p>
+          <Checkbox
+            isSelected={siteState.defaultPublic}
+            onValueChange={(v: boolean) => setSiteState((s) => ({ ...s, defaultPublic: v }))}
+          >
+            <span className="text-sm">上传图片默认公开</span>
+          </Checkbox>
+          <p className="text-xs opacity-60">
+            开启后，新上传的图片默认为公开状态；关闭则默认为私密状态。
           </p>
           <div className="flex items-center gap-2">
             <Button type="submit" variant="primary" isDisabled={siteStatus === "saving"}>

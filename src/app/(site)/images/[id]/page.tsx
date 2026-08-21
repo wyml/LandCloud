@@ -9,6 +9,7 @@ import { getNeighborImageIds, getPublicImage } from "@/server/queries/public";
 import { getExternalLinkSettings } from "@/server/queries/settings";
 import { getS3PublicBase, getSiteUrl } from "@/lib/env";
 import { ExternalLinks } from "@/components/admin/images/external-links";
+import { BlurImage } from "@/components/shared/blur-image";
 
 export async function generateMetadata({ params }: PageProps<"/images/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -89,7 +90,7 @@ export default async function ImageDetailPage({ params }: PageProps<"/images/[id
           {image.is_live_photo && image.live_photo_video_key ? (
             <LivePhotoPlayer imageId={id} />
           ) : (
-            <img
+            <BlurImage
               src={`/f/${id}/display`}
               alt={image.title || image.original_name}
               className="h-auto w-full"

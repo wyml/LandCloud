@@ -9,6 +9,7 @@ export interface SiteSettingsInput {
   logo: string;
   description: string;
   footer: string;
+  defaultPublic: boolean;
 }
 
 export async function updateSiteSettings(input: SiteSettingsInput) {
@@ -22,6 +23,7 @@ export async function updateSiteSettings(input: SiteSettingsInput) {
         logo: input.logo.trim(),
         description: input.description.trim(),
         footer: input.footer.trim(),
+        default_public: input.defaultPublic,
       },
     },
     { onConflict: "key" },

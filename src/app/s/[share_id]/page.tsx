@@ -8,6 +8,7 @@ import { SharePasswordForm } from "@/components/site/share-password-form";
 import { hasShareGrant } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShareForView, getSharedAlbumContent } from "@/server/queries/shares";
+import { BlurImage } from "@/components/shared/blur-image";
 
 export const metadata: Metadata = { title: "分享" };
 
@@ -59,7 +60,7 @@ export default async function SharePage({ params }: PageProps<"/s/[share_id]">) 
   return (
     <div className="flex flex-col items-center gap-4">
       <h1 className="text-xl font-semibold">{image.title || image.original_name}</h1>
-      <img
+      <BlurImage
         src={`/f/${image.id}/display`}
         alt={image.title || image.original_name}
         className="max-h-[80vh] w-full object-contain"

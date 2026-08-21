@@ -12,6 +12,7 @@ import {
   isAcceptedLivePhotoMime,
 } from "@/lib/images/variants";
 import { AppSelect } from "@/components/shared/app-select";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 type FileState =
   | { state: "waiting" | "signing" | "completing"; pct: number }
@@ -22,6 +23,7 @@ interface UploadPanelProps {
   albums: AlbumOption[];
   onClose: () => void;
   onUploaded: () => void;
+  defaultPublic?: boolean;
 }
 
 function uploadWithProgress(url: string, file: File): Promise<void> {
@@ -39,14 +41,15 @@ function uploadWithProgress(url: string, file: File): Promise<void> {
   });
 }
 
-export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
+export function UploadPanel({ albums, onClose, onUploaded, defaultPublic = true }: UploadPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [statuses, setStatuses] = useState<Record<string, FileState>>({});
   const [tagInput, setTagInput] = useState("");
-  const [visibility, setVisibility] = useState<"public" | "private" | "password">("public");
+  const [visibility, setVisibility] = useState<"public" | "private" | "password">(defaultPublic ? "public" : "private");
+  const { dialog, showAlert, closeDialog } = useAlertDialog();
   const [albumIds, setAlbumIds] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -60,7 +63,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
     const picked = Array.from(list);
     if (picked.length === 0) return;
     if (files.length + picked.length > MAX_BATCH_SIZE) {
-      window.alert(`单次最多上传 ${MAX_BATCH_SIZE} 个文件`);
+      showAlert("上传限制", `单次最多上传 ${MAX_BATCH_SIZE} 个文件`);
       return;
     }
     const valid: File[] = [];
@@ -70,11 +73,11 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
         continue;
       }
       if (!isAcceptedMime(f.type)) {
-        window.alert(`不支持的文件类型: ${f.name} (${f.type})`);
+        showAlert("文件类型错误", `不支持的文件类型: ${f.name} (${f.type})`);
         continue;
       }
       if (f.size <= 0 || f.size > MAX_FILE_SIZE) {
-        window.alert(`文件大小超出限制 (≤50MB): ${f.name}`);
+        showAlert("文件大小超限", `文件大小超出限制 (≤50MB): ${f.name}`);
         continue;
       }
       valid.push(f);
@@ -92,11 +95,11 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
   function addVideoFile(file: File | null) {
     if (file) {
       if (!isAcceptedLivePhotoMime(file.type)) {
-        window.alert(`不支持的视频类型: ${file.name} (${file.type})`);
+        showAlert("文件类型错误", `不支持的视频类型: ${file.name} (${file.type})`);
         return;
       }
       if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
-        window.alert(`视频文件大小超出限制 (≤50MB): ${file.name}`);
+        showAlert("文件大小超限", `视频文件大小超出限制 (≤50MB): ${file.name}`);
         return;
       }
       setVideoFile(file);
@@ -133,7 +136,7 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
       });
       if (!presignRes.ok) {
         const body = await presignRes.json().catch(() => null);
-        window.alert(body?.error ?? "预签名失败");
+        showAlert("预签名失败", body?.error ?? "预签名失败");
         setBusy(false);
         return;
       }
@@ -397,6 +400,13 @@ export function UploadPanel({ albums, onClose, onUploaded }: UploadPanelProps) {
           </div>
         </div>
       )}
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+      />
     </div>
   );
 }

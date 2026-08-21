@@ -18,13 +18,13 @@ export default async function AdminPanelLayout({ children }: LayoutProps<"/admin
   const [user, settings] = await Promise.all([requireAdmin(), getSiteSettings()]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <aside className="flex w-56 shrink-0 flex-col border-r border-neutral-200 p-4 dark:border-neutral-800">
         <div className="mb-6 px-2">
           <p className="text-lg font-semibold">{settings.name} 后台</p>
           <p className="truncate text-xs opacity-60">{user.email}</p>
         </div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -36,13 +36,13 @@ export default async function AdminPanelLayout({ children }: LayoutProps<"/admin
             </Link>
           ))}
         </nav>
-        <form action={logout}>
+        <form action={logout} className="mt-auto">
           <Button type="submit" variant="outline" fullWidth>
             退出登录
           </Button>
         </form>
       </aside>
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

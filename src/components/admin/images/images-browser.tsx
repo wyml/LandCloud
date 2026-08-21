@@ -19,6 +19,8 @@ import { ImageEditPanel } from "./image-edit-panel";
 import { MobileUploadDialog } from "./mobile-upload-dialog";
 import { UploadPanel } from "./upload-panel";
 import { AppSelect } from "@/components/shared/app-select";
+import { BlurImage } from "@/components/shared/blur-image";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 const PAGE_SIZE = 24;
 
@@ -42,6 +44,7 @@ interface ImagesBrowserProps {
   siteUrl: string;
   s3PublicBase: string | null;
   preferDirect?: boolean;
+  defaultPublic?: boolean;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -81,6 +84,7 @@ export function ImagesBrowser({
   siteUrl,
   s3PublicBase,
   preferDirect = false,
+  defaultPublic = true,
 }: ImagesBrowserProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -91,6 +95,7 @@ export function ImagesBrowser({
   const [bulkTag, setBulkTag] = useState("");
   const [bulkAlbum, setBulkAlbum] = useState("");
   const [search, setSearch] = useState(filters.q ?? "");
+  const { dialog, showConfirm, closeDialog } = useAlertDialog();
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const allSelected = images.length > 0 && images.every((i) => selected.has(i.id));
@@ -347,11 +352,11 @@ export function ImagesBrowser({
           <Button
             size="sm"
             variant="danger"
-            onPress={async () => {
-              if (window.confirm(`确认删除选中的 ${selected.size} 张图片？`)) {
+            onPress={() => {
+              showConfirm("确认删除", `确认删除选中的 ${selected.size} 张图片？`, async () => {
                 await deleteImages([...selected]);
                 setSelected(new Set());
-              }
+              });
             }}
           >
             删除
@@ -364,6 +369,7 @@ export function ImagesBrowser({
           albums={albums}
           onClose={() => setUploadOpen(false)}
           onUploaded={() => router.refresh()}
+          defaultPublic={defaultPublic}
         />
       )}
 
@@ -387,7 +393,7 @@ export function ImagesBrowser({
                   aria-label={`编辑 ${image.title || image.original_name}`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden">
-                    <img
+                    <BlurImage
                       src={proxyThumb(image)}
                       alt={image.title || image.original_name}
                       className="h-full w-full object-cover"
@@ -486,7 +492,7 @@ export function ImagesBrowser({
                     </td>
                     <td className="p-3">
                       <button type="button" onClick={() => setEditImage(image)}>
-                        <img
+                        <BlurImage
                           src={proxyThumb(image)}
                           alt=""
                           className="h-10 w-10 rounded object-cover"
@@ -561,6 +567,16 @@ export function ImagesBrowser({
           onClose={() => setEditImage(null)}
         />
       )}
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel={dialog.confirmLabel}
+        onConfirm={dialog.onConfirm}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 }

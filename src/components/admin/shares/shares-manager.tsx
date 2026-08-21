@@ -5,6 +5,7 @@ import { Button, Input } from "@heroui/react";
 import type { ShareListItem } from "@/server/queries/shares";
 import { createShare, deleteShare, toggleShareRevoked } from "@/server/actions/shares";
 import { AppSelect } from "@/components/shared/app-select";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 interface SharesManagerProps {
   shares: ShareListItem[];
@@ -20,6 +21,7 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
   const [expiresHours, setExpiresHours] = useState("168");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { dialog, showConfirm, closeDialog } = useAlertDialog();
 
   const targets = targetType === "album" ? albums : images;
 
@@ -166,10 +168,10 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
                       <Button
                         size="sm"
                         variant="danger"
-                        onPress={async () => {
-                          if (window.confirm("确认删除该分享？")) {
+                        onPress={() => {
+                          showConfirm("确认删除", "确认删除该分享？", async () => {
                             await deleteShare(share.id);
-                          }
+                          });
                         }}
                       >
                         删除
@@ -189,6 +191,16 @@ export function SharesManager({ shares, albums, images, now }: SharesManagerProp
           </tbody>
         </table>
       </div>
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel={dialog.confirmLabel}
+        onConfirm={dialog.onConfirm}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 }

@@ -15,16 +15,19 @@ const geistMono = Geist_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
+  const logoWithTimestamp = settings.logo
+    ? `${settings.logo}?t=${Date.now()}`
+    : undefined;
   return {
     title: {
       default: settings.name,
       template: `%s | ${settings.name}`,
     },
     description: settings.description,
-    icons: settings.logo
+    icons: logoWithTimestamp
       ? {
-          icon: settings.logo,
-          apple: settings.logo,
+          icon: logoWithTimestamp,
+          apple: logoWithTimestamp,
         }
       : undefined,
   };

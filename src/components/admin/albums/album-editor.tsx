@@ -14,6 +14,8 @@ import {
   updateAlbum,
 } from "@/server/actions/albums";
 import { AppSelect } from "@/components/shared/app-select";
+import { BlurImage } from "@/components/shared/blur-image";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 function thumbUrl(
   imageId: string,
@@ -49,6 +51,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { dialog, showConfirm, closeDialog } = useAlertDialog();
 
   const allSelected = images.length > 0 && images.every((i) => selected.has(i.image_id));
 
@@ -226,10 +229,10 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
           <Button
             size="sm"
             variant="danger"
-            onPress={async () => {
-              if (window.confirm(`确认从相册中移除选中的 ${selected.size} 张图片？`)) {
+            onPress={() => {
+              showConfirm("确认移除", `确认从相册中移除选中的 ${selected.size} 张图片？`, async () => {
                 await batchRemove();
-              }
+              });
             }}
           >
             批量移除
@@ -275,7 +278,7 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
                 )}
               </button>
               <div className="aspect-square w-full">
-                <img
+                <BlurImage
                   src={thumbUrl(entry.image_id, siteUrl, s3PublicBase, entry.image.s3_key)}
                   alt={entry.image.title || entry.image.original_name}
                   className="h-full w-full object-cover"
@@ -353,6 +356,16 @@ export function AlbumEditor({ album, candidates, siteUrl, s3PublicBase }: AlbumE
           </div>
         </div>
       )}
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel={dialog.confirmLabel}
+        onConfirm={dialog.onConfirm}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 }

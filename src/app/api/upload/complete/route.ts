@@ -4,6 +4,7 @@ import { processImage, sha256Hex } from "@/lib/images/processing";
 import { detectMimeByMagic } from "@/lib/images/variants";
 import { deleteObject, getObjectBuffer, objectExists } from "@/lib/s3";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSiteSettings } from "@/server/queries/settings";
 
 interface CompleteBody {
   key: string;
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
       ? new Date(body.takenAt).toISOString()
       : null;
 
+  const settings = await getSiteSettings();
+  const defaultVisibility = settings.defaultPublic ? "public" : "private";
+
   const { data: image, error: insertError } = await admin
     .from("images")
     .insert({
@@ -76,7 +80,7 @@ export async function POST(request: Request) {
       size_bytes: body.size,
       sha256: hash,
       s3_key: body.key,
-      visibility: body.visibility ?? "public",
+      visibility: body.visibility ?? defaultVisibility,
       taken_at: takenAt,
       processing_status: "pending",
       is_live_photo: !!body.videoKey,

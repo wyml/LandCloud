@@ -7,6 +7,7 @@ import {
   MAX_FILE_SIZE,
   isAcceptedMime,
 } from "@/lib/images/variants";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 type FileState =
   | { state: "waiting" | "signing" | "completing"; pct: number }
@@ -41,6 +42,7 @@ export function MobileUploadPanel({
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [dragOver, setDragOver] = useState(false);
+  const { dialog, showAlert, closeDialog } = useAlertDialog();
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -63,17 +65,17 @@ export function MobileUploadPanel({
     const picked = Array.from(list);
     if (picked.length === 0) return;
     if (files.length + picked.length > MAX_BATCH_SIZE) {
-      window.alert(`单次最多上传 ${MAX_BATCH_SIZE} 个文件`);
+      showAlert("上传限制", `单次最多上传 ${MAX_BATCH_SIZE} 个文件`);
       return;
     }
     const valid: File[] = [];
     for (const f of picked) {
       if (!isAcceptedMime(f.type)) {
-        window.alert(`不支持的文件类型: ${f.name} (${f.type})`);
+        showAlert("文件类型错误", `不支持的文件类型: ${f.name} (${f.type})`);
         continue;
       }
       if (f.size <= 0 || f.size > MAX_FILE_SIZE) {
-        window.alert(`文件大小超出限制 (≤50MB): ${f.name}`);
+        showAlert("文件大小超限", `文件大小超出限制 (≤50MB): ${f.name}`);
         continue;
       }
       valid.push(f);
@@ -113,7 +115,7 @@ export function MobileUploadPanel({
       });
       if (!presignRes.ok) {
         const body = await presignRes.json().catch(() => null);
-        window.alert(body?.error ?? "预签名失败");
+        showAlert("预签名失败", body?.error ?? "预签名失败");
         return;
       }
       const { files: signed } = (await presignRes.json()) as {
@@ -274,6 +276,13 @@ export function MobileUploadPanel({
           {busy ? "上传中…" : `开始上传 (${files.length})`}
         </button>
       )}
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+      />
     </div>
   );
 }

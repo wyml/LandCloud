@@ -60,6 +60,7 @@ export interface SiteSettings {
   logo: string;
   description: string;
   footer: string;
+  defaultPublic: boolean;
 }
 
 export interface ExternalLinkSettings {

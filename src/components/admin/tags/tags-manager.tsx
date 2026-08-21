@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Button, Input } from "@heroui/react";
 import type { TagWithCount } from "@/lib/types";
 import { createTag, deleteTag, renameTag } from "@/server/actions/tags";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 export function TagsManager({ tags }: { tags: TagWithCount[] }) {
   const [newTag, setNewTag] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const { dialog, showConfirm, closeDialog } = useAlertDialog();
 
   return (
     <div className="flex flex-col gap-4">
@@ -90,10 +92,10 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
                     <Button
                       size="sm"
                       variant="danger"
-                      onPress={async () => {
-                        if (window.confirm(`删除标签「${tag.name}」？将解除与图片的关联。`)) {
+                      onPress={() => {
+                        showConfirm("确认删除", `删除标签「${tag.name}」？将解除与图片的关联。`, async () => {
                           await deleteTag(tag.id);
-                        }
+                        });
                       }}
                     >
                       删除
@@ -112,6 +114,16 @@ export function TagsManager({ tags }: { tags: TagWithCount[] }) {
           </tbody>
         </table>
       </div>
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel={dialog.confirmLabel}
+        onConfirm={dialog.onConfirm}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 }

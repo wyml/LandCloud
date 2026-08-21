@@ -1,7 +1,7 @@
 import { getS3PublicBase, getSiteUrl } from "@/lib/env";
 import type { TagWithCount } from "@/lib/types";
 import { getAlbumOptions, getTagsWithCount, listImages } from "@/server/queries/images";
-import { getExternalLinkSettings } from "@/server/queries/settings";
+import { getExternalLinkSettings, getSiteSettings } from "@/server/queries/settings";
 import { ImagesBrowser } from "@/components/admin/images/images-browser";
 
 export const metadata = { title: "图片管理" };
@@ -27,10 +27,11 @@ export default async function AdminImagesPage({ searchParams }: PageProps<"/admi
     dir,
   });
 
-  const [albums, tags, externalLink] = await Promise.all([
+  const [albums, tags, externalLink, siteSettings] = await Promise.all([
     getAlbumOptions(),
     getTagsWithCount(),
     getExternalLinkSettings(),
+    getSiteSettings(),
   ]);
 
   return (
@@ -52,6 +53,7 @@ export default async function AdminImagesPage({ searchParams }: PageProps<"/admi
       siteUrl={getSiteUrl()}
       s3PublicBase={externalLink.directBase || getS3PublicBase()}
       preferDirect={externalLink.defaultType === "direct"}
+      defaultPublic={siteSettings.defaultPublic}
     />
   );
 }

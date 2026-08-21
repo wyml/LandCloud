@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@heroui/react";
 import { getSiteUrl } from "@/lib/env";
 import { getDashboardStats } from "@/server/queries/dashboard";
+import { BlurImage } from "@/components/shared/blur-image";
 
 function formatBytes(bytes: number): string {
   if (bytes <= 0) return "0 B";
@@ -57,8 +58,7 @@ export default async function AdminDashboardPage() {
                 className="group overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800"
               >
                 <div className="relative aspect-square w-full overflow-hidden bg-neutral-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <BlurImage
                     src={`${siteUrl}/f/${image.id}/thumb_md`}
                     alt={image.title || image.original_name}
                     loading="lazy"

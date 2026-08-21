@@ -3,6 +3,7 @@
 import { Aperture, Play, Pause } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { parseLivePhoto } from "@/lib/images/live-photo-parser";
+import { BlurImage } from "@/components/shared/blur-image";
 
 interface LivePhotoPlayerProps {
   imageId?: string;
@@ -139,7 +140,7 @@ export function LivePhotoPlayer({
       onTouchStart={handleMouseDown}
       onTouchEnd={handleMouseUp}
     >
-      <img
+      <BlurImage
         src={resolvedImageSrc}
         alt=""
         className="h-full w-full object-cover"

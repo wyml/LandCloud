@@ -13,6 +13,8 @@ import {
   updateAlbum,
 } from "@/server/actions/albums";
 import { AppSelect } from "@/components/shared/app-select";
+import { BlurImage } from "@/components/shared/blur-image";
+import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
 const VISIBILITY_LABEL: Record<string, string> = {
   public: "公开",
@@ -57,6 +59,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { dialog, showConfirm, closeDialog } = useAlertDialog();
 
   const allSelected = albums.length > 0 && albums.every((a) => selected.has(a.id));
 
@@ -204,11 +207,11 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
           <Button
             size="sm"
             variant="danger"
-            onPress={async () => {
-              if (window.confirm(`确认删除选中的 ${selected.size} 个相册？仅删除相册，不会删除图片。`)) {
+            onPress={() => {
+              showConfirm("确认删除", `确认删除选中的 ${selected.size} 个相册？仅删除相册，不会删除图片。`, async () => {
                 await bulkDeleteAlbums([...selected]);
                 setSelected(new Set());
-              }
+              });
             }}
           >
             删除
@@ -251,7 +254,7 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
               <Link href={`/admin/albums/${album.id}`} className="block">
                 <div className="flex h-40 items-center justify-center bg-neutral-100">
                   {cover ? (
-                    <img
+                    <BlurImage
                       src={cover}
                       alt={album.name}
                       className="h-full w-full object-cover"
@@ -294,10 +297,10 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
                   <Button
                     size="sm"
                     variant="danger"
-                    onPress={async () => {
-                      if (window.confirm(`删除相册「${album.name}」？仅解除关联，不会删除图片。`)) {
+                    onPress={() => {
+                      showConfirm("确认删除", `删除相册「${album.name}」？仅解除关联，不会删除图片。`, async () => {
                         await deleteAlbum(album.id);
-                      }
+                      });
                     }}
                   >
                     删除
@@ -311,6 +314,16 @@ export function AlbumsManager({ albums, siteUrl, s3PublicBase }: AlbumsManagerPr
           <p className="col-span-full py-8 text-center opacity-60">暂无相册，请在上方创建</p>
         )}
       </div>
+
+      <AlertDialog
+        open={dialog.open}
+        onClose={closeDialog}
+        title={dialog.title}
+        message={dialog.message}
+        confirmLabel={dialog.confirmLabel}
+        onConfirm={dialog.onConfirm}
+        showCancel={dialog.showCancel}
+      />
     </div>
   );
 }
