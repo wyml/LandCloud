@@ -62,7 +62,7 @@ export function SettingsForm({
           <TextField
             name="name"
             value={siteState.name}
-            onChange={(v) => setSiteState((s) => ({ ...s, name: v }))}
+            onChange={(v: string) => setSiteState((s) => ({ ...s, name: v }))}
             isRequired
           >
             <Label>站点名称</Label>
@@ -72,7 +72,7 @@ export function SettingsForm({
           <TextField
             name="logo"
             value={siteState.logo}
-            onChange={(v) => setSiteState((s) => ({ ...s, logo: v }))}
+            onChange={(v: string) => setSiteState((s) => ({ ...s, logo: v }))}
           >
             <Label>Logo 图片 URL（可选）</Label>
             <Input placeholder="https://…/logo.png" />
@@ -81,7 +81,7 @@ export function SettingsForm({
           <TextField
             name="description"
             value={siteState.description}
-            onChange={(v) => setSiteState((s) => ({ ...s, description: v }))}
+            onChange={(v: string) => setSiteState((s) => ({ ...s, description: v }))}
           >
             <Label>站点简介</Label>
             <Input placeholder="个人图床相册网站" />
@@ -90,12 +90,15 @@ export function SettingsForm({
           <TextField
             name="footer"
             value={siteState.footer}
-            onChange={(v) => setSiteState((s) => ({ ...s, footer: v }))}
+            onChange={(v: string) => setSiteState((s) => ({ ...s, footer: v }))}
           >
-            <Label>页脚文案</Label>
+            <Label>页脚文案（支持 HTML）</Label>
             <Input placeholder="© PicBed" />
             <FieldError />
           </TextField>
+          <p className="text-xs opacity-60">
+            支持 HTML 标签，可用于放置访问统计代码、ICP 备案信息等。
+          </p>
           <div className="flex items-center gap-2">
             <Button type="submit" variant="primary" isDisabled={siteStatus === "saving"}>
               {siteStatus === "saving" ? "保存中…" : "保存站点信息"}
@@ -113,7 +116,7 @@ export function SettingsForm({
           <TextField
             name="directBase"
             value={linkState.directBase}
-            onChange={(v) => setLinkState((s) => ({ ...s, directBase: v }))}
+            onChange={(v: string) => setLinkState((s) => ({ ...s, directBase: v }))}
           >
             <Label>直链域名前缀（S3/CDN 公网地址，可选）</Label>
             <Input placeholder="https://cdn.example.com" />

@@ -81,12 +81,18 @@
   - 变体生成：`display.webp`(2560px/q80)、`thumb_lg/md/sm`；GIF/SVG 特殊分支。
   - 状态机 pending→processing→done/failed；失败重试接口 `/api/upload/reprocess`。
 - 路径规范 `images/{yyyy}/{mm}/{id}/{variant}.{ext}` 与变体元数据入库。
+- **实况照片（Live Photos）支持**：
+  - 识别 HEIC/HEIF 格式中的实况照片（包含静态图 + MOV 视频）。
+  - 上传时自动提取静态帧和关联视频，存储为 `image` + `live_photo_video` 两个对象。
+  - 前端展示时支持实况照片标识和播放按钮（点击播放短视频）。
+  - 数据库 `images` 表增加 `is_live_photo`、`live_photo_video_key` 字段。
 
 **验收标准**：
 
 - 浏览器直传 50MB JPG 成功，全流程无人工干预产出 5 个变体与 EXIF。
 - 重复上传被拦截并返回已有记录。
 - 模拟处理失败后可重试成功；非图片文件被 MIME/魔数校验拒绝。
+- 上传 HEIC 格式实况照片可正确分离静态图和视频，前台展示带播放标识。
 
 ---
 

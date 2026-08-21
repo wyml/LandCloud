@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getSiteSettings } from "@/server/queries/settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,13 +13,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "PicBed 个人图床",
-    template: "%s | PicBed",
-  },
-  description: "个人图床相册网站",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return {
+    title: {
+      default: settings.name,
+      template: `%s | ${settings.name}`,
+    },
+    description: settings.description,
+    icons: settings.logo
+      ? {
+          icon: settings.logo,
+          apple: settings.logo,
+        }
+      : undefined,
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

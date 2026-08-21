@@ -35,7 +35,7 @@ export function AppSelect({
     <Select
       aria-label={ariaLabel}
       selectedKey={value}
-      onSelectionChange={(key) => onChange(key == null ? "" : String(key))}
+      onSelectionChange={(key: string | number | null) => onChange(key == null ? "" : String(key))}
       className={className}
       fullWidth={fullWidth}
     >
