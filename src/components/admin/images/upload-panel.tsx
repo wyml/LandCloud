@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Input } from "@heroui/react";
+import { Button, CloseButton, Input } from "@heroui/react";
 import { Check, X, LoaderCircle, Clock, Copy } from "lucide-react";
 import type { AlbumOption } from "@/lib/types";
 import {
@@ -67,6 +67,17 @@ export function UploadPanel({ albums, onClose, onUploaded, defaultPublic = true 
   const setStatus = useCallback((key: string, s: FileState) => {
     setStatuses((prev) => ({ ...prev, [key]: s }));
   }, []);
+
+  function clearAll() {
+    for (const url of allUrlsRef.current) URL.revokeObjectURL(url);
+    allUrlsRef.current.clear();
+    setFiles([]);
+    setVideoFile(null);
+    setStatuses({});
+    setThumbUrls({});
+    setTagInput("");
+    setAlbumIds(new Set());
+  }
 
   useEffect(() => {
     const urls = allUrlsRef.current;
@@ -277,9 +288,14 @@ export function UploadPanel({ albums, onClose, onUploaded, defaultPublic = true 
     <div className="rounded-xl border border-neutral-200 p-4 dark:border-neutral-800">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-semibold">上传图片</h2>
-        <Button variant="ghost" size="sm" onPress={onClose}>
-          关闭
-        </Button>
+        <div className="flex items-center gap-1">
+          {files.length > 0 && (
+            <Button variant="ghost" size="sm" onPress={clearAll}>
+              清除
+            </Button>
+          )}
+          <CloseButton onPress={onClose} aria-label="关闭" />
+        </div>
       </div>
 
       <div
