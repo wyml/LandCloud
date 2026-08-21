@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input, TextArea, Surface, Checkbox, Chip } from "@heroui/react";
+import { Button, CloseButton, Input, TextArea, Surface, Chip, toast } from "@heroui/react";
 import type { AlbumOption, ImageWithRelations } from "@/lib/types";
 import {
   deleteImages,
@@ -12,6 +12,7 @@ import {
 } from "@/server/actions/images";
 import { ExternalLinks } from "./external-links";
 import { AppSelect } from "@/components/shared/app-select";
+import { AppMultiSelect } from "@/components/shared/app-multi-select";
 import { LivePhotoPlayer } from "@/components/site/live-photo-player";
 import { BlurImage } from "@/components/shared/blur-image";
 import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
@@ -54,15 +55,6 @@ export function ImageEditPanel({
   const [error, setError] = useState<string | null>(null);
   const { dialog, showAlert, showConfirm, closeDialog } = useAlertDialog();
 
-  function toggleAlbum(id: string) {
-    setAlbumIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
   function addTag() {
     const name = tagInput.trim();
     if (!name) return;
@@ -83,6 +75,7 @@ export function ImageEditPanel({
       });
       await setImageAlbums({ imageId: image.id, albumIds: [...albumIds] });
       await setImageTags({ imageId: image.id, tagNames });
+      toast.success("保存成功");
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -116,11 +109,9 @@ export function ImageEditPanel({
         variant="default"
         className="flex h-full w-full max-w-md flex-col"
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 p-5 dark:border-neutral-800">
+        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4 dark:border-neutral-800">
           <h2 className="text-lg font-semibold">编辑图片</h2>
-          <Button variant="ghost" size="sm" onPress={onClose}>
-            关闭
-          </Button>
+          <CloseButton onPress={onClose} aria-label="关闭" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
@@ -221,17 +212,13 @@ export function ImageEditPanel({
             {albums.length > 0 && (
               <div className="flex flex-col gap-1">
                 <span className="text-sm">所属相册</span>
-                <div className="flex flex-wrap gap-2">
-                  {albums.map((a) => (
-                    <Checkbox
-                      key={a.id}
-                      isSelected={albumIds.has(a.id)}
-                      onChange={() => toggleAlbum(a.id)}
-                    >
-                      {a.name}
-                    </Checkbox>
-                  ))}
-                </div>
+                <AppMultiSelect
+                  selected={albumIds}
+                  onChange={setAlbumIds}
+                  options={albums.map((a) => ({ value: a.id, label: a.name }))}
+                  ariaLabel="选择相册"
+                  placeholder="选择相册（可多选）"
+                />
               </div>
             )}
 
@@ -258,6 +245,7 @@ export function ImageEditPanel({
                 onPress={() => {
                   showConfirm("确认删除", `确认删除图片「${image.title}」？`, async () => {
                     await deleteImages([image.id]);
+                    toast.success("删除成功");
                     onClose();
                   });
                 }}

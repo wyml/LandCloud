@@ -266,6 +266,10 @@ export function UploadPanel({ albums, onClose, onUploaded, defaultPublic = true 
     } finally {
       setBusy(false);
       onUploaded();
+      setFiles((prev) => prev.filter((f) => {
+        const s = statuses[keyOf(f)];
+        return s?.state !== "done" && s?.state !== "duplicate";
+      }));
     }
   }
 
