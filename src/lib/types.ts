@@ -43,6 +43,7 @@ export interface TagRow {
 export interface ImageWithRelations extends ImageRow {
   tags: Array<{ id: string; name: string }>;
   albumIds: string[];
+  albums: Array<{ id: string; name: string }>;
 }
 
 export interface AlbumOption {

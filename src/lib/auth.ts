@@ -11,14 +11,14 @@ export async function getSessionUser(): Promise<User | null> {
   return data.user;
 }
 
-export function isAdminUser(user: User | null): boolean {
+export async function isAdminUser(user: User | null): Promise<boolean> {
   if (!user?.email) return false;
-  return user.email.toLowerCase() === getAdminEmail().toLowerCase();
+  return user.email.toLowerCase() === (await getAdminEmail()).toLowerCase();
 }
 
 export async function requireAdmin(): Promise<User> {
   const user = await getSessionUser();
   if (!user) redirect("/admin/login");
-  if (!isAdminUser(user)) redirect("/admin/forbidden");
+  if (!(await isAdminUser(user))) redirect("/admin/forbidden");
   return user;
 }

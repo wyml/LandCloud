@@ -31,7 +31,12 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  const { data: configData } = await supabase
+    .from("app_config")
+    .select("value")
+    .eq("key", "admin_email")
+    .maybeSingle();
+  const adminEmail = (configData?.value ?? process.env.ADMIN_EMAIL)?.toLowerCase();
   const isAdmin = !!user?.email && user.email.toLowerCase() === adminEmail;
 
   if (pathname.startsWith("/admin/login")) {

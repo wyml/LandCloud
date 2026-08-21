@@ -19,14 +19,20 @@ function normalizeImage(row: Record<string, unknown>): ImageWithRelations {
   const image_tags = (row.image_tags ?? []) as Array<{
     tags?: { id: string; name: string } | null;
   }>;
-  const album_images = (row.album_images ?? []) as Array<{ album_id: string }>;
+  const album_images = (row.album_images ?? []) as Array<{
+    album_id: string;
+    albums?: { id: string; name: string } | null;
+  }>;
   const { image_tags: _ignoredTags, album_images: _ignoredAlbums, ...rest } = row;
   void _ignoredTags;
   void _ignoredAlbums;
   return {
-    ...(rest as unknown as Omit<ImageWithRelations, "tags" | "albumIds">),
+    ...(rest as unknown as Omit<ImageWithRelations, "tags" | "albumIds" | "albums">),
     tags: image_tags.map((it) => it.tags).filter((t): t is { id: string; name: string } => !!t),
     albumIds: album_images.map((ai) => ai.album_id),
+    albums: album_images
+      .map((ai) => ai.albums)
+      .filter((a): a is { id: string; name: string } => !!a),
   };
 }
 
@@ -43,7 +49,9 @@ export async function listImages(
   const selectParts = [
     "*",
     "image_tags(tag_id, tags(id, name))",
-    needsAlbumFilter ? "album_images!inner(album_id)" : "album_images(album_id)",
+    needsAlbumFilter
+      ? "album_images!inner(album_id, albums(id, name))"
+      : "album_images(album_id, albums(id, name))",
   ];
 
   let query = admin.from("images").select(selectParts.join(", "), { count: "exact" });

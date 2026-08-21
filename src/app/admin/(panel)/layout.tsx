@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button, Toast } from "@heroui/react";
-import { LayoutDashboard, Image, FolderOpen, Tag, Share2, Settings, ExternalLink } from "lucide-react";
+import { LayoutDashboard, Image, FolderOpen, Tag, Share2, Settings, ExternalLink, UserCog } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { getSiteSettings } from "@/server/queries/settings";
 import { logout } from "@/server/actions/auth";
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/tags", label: "标签管理", icon: Tag },
   { href: "/admin/shares", label: "分享管理", icon: Share2 },
   { href: "/admin/settings", label: "站点设置", icon: Settings },
+  { href: "/admin/account", label: "账户设置", icon: UserCog },
 ];
 
 export default async function AdminPanelLayout({ children }: LayoutProps<"/admin">) {

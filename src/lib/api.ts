@@ -9,7 +9,7 @@ export async function guardAdmin(): Promise<NextResponse | null> {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!isAdminUser(user)) {
+  if (!(await isAdminUser(user))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   return null;
@@ -20,7 +20,7 @@ export type UploadAccess =
 
 export async function guardUploadAccess(request: Request): Promise<UploadAccess> {
   const user = await getSessionUser();
-  if (user && isAdminUser(user)) return { ok: true, mode: "admin" };
+  if (user && (await isAdminUser(user))) return { ok: true, mode: "admin" };
   if (verifyUploadToken(request.headers.get("x-upload-token") ?? undefined)) {
     return { ok: true, mode: "token" };
   }

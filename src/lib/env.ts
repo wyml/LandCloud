@@ -20,7 +20,19 @@ export function getSupabaseServiceRoleKey(): string {
   return requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 }
 
-export function getAdminEmail(): string {
+export async function getAdminEmail(): Promise<string> {
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("app_config")
+      .select("value")
+      .eq("key", "admin_email")
+      .maybeSingle();
+    if (data?.value) return data.value as string;
+  } catch {
+    // fallback to env
+  }
   return requireEnv("ADMIN_EMAIL");
 }
 

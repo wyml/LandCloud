@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Button, Input, Checkbox } from "@heroui/react";
+import { Button, Input, Checkbox, Chip } from "@heroui/react";
 import { Aperture } from "lucide-react";
 import type { ImageWithRelations, TagWithCount, AlbumOption } from "@/lib/types";
 import {
@@ -442,6 +442,11 @@ export function ImagesBrowser({
                       {VISIBILITY_LABEL[image.visibility]}
                     </span>
                     <span className="opacity-60">👁 {image.view_count}</span>
+                    {image.albums.map((a) => (
+                      <Chip key={a.id} size="sm" variant="soft" className="h-4 text-[10px]">
+                        {a.name}
+                      </Chip>
+                    ))}
                   </div>
                 </div>
                 <button
@@ -483,6 +488,7 @@ export function ImagesBrowser({
                 <th className="p-3">标题</th>
                 <th className="p-3">可见性</th>
                 <th className="p-3">状态</th>
+                <th className="p-3">所属相册</th>
                 <th className="p-3">浏览量</th>
                 <th className="p-3">上传时间</th>
               </tr>
@@ -527,6 +533,17 @@ export function ImagesBrowser({
                     </td>
                     <td className="p-3">{VISIBILITY_LABEL[image.visibility]}</td>
                     <td className="p-3">{STATUS_LABEL[image.processing_status]}</td>
+                    <td className="max-w-[180px] p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {image.albums.length > 0
+                          ? image.albums.map((a) => (
+                              <Chip key={a.id} size="sm" variant="soft" className="h-5 text-[10px]">
+                                {a.name}
+                              </Chip>
+                            ))
+                          : <span className="text-xs opacity-40">—</span>}
+                      </div>
+                    </td>
                     <td className="p-3">{image.view_count}</td>
                     <td className="p-3 text-xs opacity-70">
                       {new Date(image.created_at).toLocaleString("zh-CN")}

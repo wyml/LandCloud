@@ -73,7 +73,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/f/[id]/[
   if (!publiclyVisible && !isHidden) {
     const supabase = await createClient();
     const { data: session } = await supabase.auth.getUser();
-    isAdmin = isAdminUser(session.user);
+    isAdmin = await isAdminUser(session.user);
   }
   const shareGranted = !publiclyVisible && !isHidden && !isAdmin ? await hasShareAccess(admin, id) : false;
 

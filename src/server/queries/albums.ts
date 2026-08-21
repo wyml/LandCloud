@@ -35,7 +35,7 @@ export async function listAlbums(): Promise<AlbumListItem[]> {
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
 
-  return ((data as unknown as Record<string, unknown>[]) ?? []).map((row) => {
+  const albums = ((data as unknown as Record<string, unknown>[]) ?? []).map((row) => {
     const coverImage = (row.cover_image ?? null) as {
       id: string;
       s3_key: string;
@@ -51,6 +51,28 @@ export async function listAlbums(): Promise<AlbumListItem[]> {
       cover: coverImage,
     };
   });
+
+  const noCoverIds = albums.filter((a) => !a.cover).map((a) => a.id);
+  if (noCoverIds.length > 0) {
+    const { data: latest } = await admin
+      .from("album_images")
+      .select(`album_id, images!inner(id, s3_key, title)`)
+      .in("album_id", noCoverIds)
+      .eq("images.processing_status", "done")
+      .order("images.created_at", { ascending: false, referencedTable: "images" });
+    const fallback = new Map<string, { id: string; s3_key: string; title: string }>();
+    for (const row of (latest as unknown as Array<{
+      album_id: string;
+      images: { id: string; s3_key: string; title: string };
+    }>) ?? []) {
+      if (!fallback.has(row.album_id)) fallback.set(row.album_id, row.images);
+    }
+    for (const album of albums) {
+      if (!album.cover && fallback.has(album.id)) album.cover = fallback.get(album.id)!;
+    }
+  }
+
+  return albums;
 }
 
 export async function getAlbumDetail(id: string): Promise<AlbumDetail | null> {
@@ -79,7 +101,11 @@ export async function getAlbumDetail(id: string): Promise<AlbumDetail | null> {
   return {
     ...(row as unknown as Omit<AlbumListItem, "imageCount" | "cover">),
     imageCount: albumImages.length,
-    cover: coverImage,
+    cover:
+      coverImage ??
+      (albumImages[0]
+        ? { id: albumImages[0].images.id, s3_key: albumImages[0].images.s3_key, title: albumImages[0].images.title }
+        : null),
     images: albumImages
       .map((ai) => ({ image_id: ai.image_id, sort_order: ai.sort_order, image: ai.images }))
       .sort((a, b) => a.sort_order - b.sort_order),
