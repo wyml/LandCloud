@@ -50,12 +50,38 @@ function gpsToDecimal(values: number[] | undefined, ref: string | undefined): nu
 
 function parseExifDate(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
-  // EXIF 格式: "YYYY:MM:DD HH:MM:SS"
-  const match = raw.match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
-  if (!match) return null;
-  const iso = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}`;
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  
+  // 尝试多种EXIF日期格式
+  const patterns = [
+    // "YYYY:MM:DD HH:MM:SS" (标准EXIF格式)
+    /^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/,
+    // "YYYY-MM-DD HH:MM:SS" (某些相机使用)
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/,
+    // "YYYY:MM:DD" (只有日期，没有时间)
+    /^(\d{4}):(\d{2}):(\d{2})$/,
+    // "YYYY-MM-DD" (只有日期，没有时间)
+    /^(\d{4})-(\d{2})-(\d{2})$/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = raw.match(pattern);
+    if (match) {
+      const year = match[1];
+      const month = match[2];
+      const day = match[3];
+      const hour = match[4] || "00";
+      const minute = match[5] || "00";
+      const second = match[6] || "00";
+      
+      const iso = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+      const date = new Date(iso);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+    }
+  }
+  
+  return null;
 }
 
 function extractExif(buffer: Buffer): {
@@ -96,11 +122,24 @@ function extractExif(buffer: Buffer): {
   const gpsLat = gpsToDecimal(gps.GPSLatitude, gps.GPSLatitudeRef);
   const gpsLng = gpsToDecimal(gps.GPSLongitude, gps.GPSLongitudeRef);
 
+  // 尝试多个日期字段，按优先级排序
+  const dateFields = [
+    photo.DateTimeOriginal,    // 拍摄时间（最优先）
+    photo.DateTimeDigitized,   // 数字化时间
+    image.DateTime,            // 修改时间（最后）
+  ];
+  
+  let takenAt: string | null = null;
+  for (const field of dateFields) {
+    takenAt = parseExifDate(field);
+    if (takenAt) break;
+  }
+
   return {
     clean,
     gpsLat,
     gpsLng,
-    takenAt: parseExifDate(photo.DateTimeOriginal ?? image.DateTime),
+    takenAt,
   };
 }
 

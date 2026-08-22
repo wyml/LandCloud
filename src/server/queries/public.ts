@@ -275,6 +275,40 @@ export async function getPublicImage(id: string): Promise<PublicImageDetail | nu
   };
 }
 
+export async function getImageDetail(id: string): Promise<PublicImageDetail | null> {
+  const admin = createAdminClient();
+  const { data: img, error } = await admin
+    .from("images")
+    .select("*, image_tags(tags(id, name))")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !img) return null;
+  const row = img as unknown as Record<string, unknown>;
+
+  const { data: members } = await admin
+    .from("album_images")
+    .select("album_id, albums!inner(id, name, visibility)")
+    .eq("image_id", id);
+  const albums = (
+    (members as unknown as Array<{ albums: { id: string; name: string } }>) ?? []
+  ).map((m) => m.albums);
+
+  const tags = ((row.image_tags as unknown as Array<{ tags: { id: string; name: string } }>) ?? [])
+    .map((t) => t.tags)
+    .filter(Boolean);
+
+  const { id: _id, image_tags: _tags, ...rest } = row;
+  void _id;
+  void _tags;
+  return {
+    id: row.id as string,
+    ...(rest as unknown as Omit<PublicImage, "id">),
+    exif: (row.exif as Record<string, unknown>) ?? {},
+    tags,
+    albums,
+  };
+}
+
 export async function getNeighborImageIds(
   currentId: string,
   takenAt: string | null,

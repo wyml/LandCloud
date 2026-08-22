@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site/site-header";
-import { ThemeScript } from "@/components/site/theme-toggle";
 import { getSiteSettings } from "@/server/queries/settings";
 import { getSessionUser, isAdminUser } from "@/lib/auth";
 
@@ -11,7 +10,6 @@ export default async function GlobeLayout({ children }: { children: React.ReactN
   const isAdmin = await isAdminUser(user);
   return (
     <div className="flex min-h-screen flex-col bg-black">
-      <ThemeScript />
       <SiteHeader settings={settings} isAdmin={isAdmin} />
       <main className="flex-1">{children}</main>
     </div>

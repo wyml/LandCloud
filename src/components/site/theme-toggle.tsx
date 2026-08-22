@@ -1,21 +1,8 @@
 "use client";
 
-import Script from "next/script";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-export function ThemeScript() {
-  return (
-    <Script
-      id="theme-init"
-      strategy="beforeInteractive"
-      dangerouslySetInnerHTML={{
-        __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(!t&&window.matchMedia("(prefers-color-scheme: dark)").matches);if(d)document.documentElement.classList.add("dark")}catch(e){}})();`,
-      }}
-    />
-  );
-}
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);

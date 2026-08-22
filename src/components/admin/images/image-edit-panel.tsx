@@ -2,7 +2,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button, CloseButton, Input, TextArea, Surface, Chip, toast } from "@heroui/react";
+import { ExternalLink } from "lucide-react";
 import type { AlbumOption, ImageWithRelations } from "@/lib/types";
 import {
   deleteImages,
@@ -235,6 +237,16 @@ export function ImageEditPanel({
               <Button variant="primary" onPress={save} isDisabled={saving}>
                 {saving ? "保存中…" : "保存"}
               </Button>
+              <Link
+                href={`/images/${image.id}`}
+                target="_blank"
+                className="inline-flex items-center gap-1.5"
+              >
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  查看详情
+                </Button>
+              </Link>
               {image.processing_status !== "done" && (
                 <Button variant="outline" onPress={reprocess}>
                   重新处理

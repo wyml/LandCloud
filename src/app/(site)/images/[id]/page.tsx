@@ -6,9 +6,10 @@ import { notFound } from "next/navigation";
 import { ViewTracker } from "@/components/site/view-tracker";
 import { LivePhotoPlayer } from "@/components/site/live-photo-player";
 import { ImageDetailReveal } from "@/components/site/image-detail-reveal";
-import { getNeighborImageIds, getPublicImage } from "@/server/queries/public";
+import { getNeighborImageIds, getPublicImage, getImageDetail } from "@/server/queries/public";
 import { getExternalLinkSettings } from "@/server/queries/settings";
 import { getS3PublicBase, getSiteUrl } from "@/lib/env";
+import { getSessionUser, isAdminUser } from "@/lib/auth";
 import { ExternalLinks } from "@/components/admin/images/external-links";
 import { BlurImage } from "@/components/shared/blur-image";
 import {
@@ -29,7 +30,9 @@ import {
 
 export async function generateMetadata({ params }: PageProps<"/images/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const image = await getPublicImage(id);
+  const user = await getSessionUser();
+  const isAdmin = await isAdminUser(user);
+  const image = isAdmin ? await getImageDetail(id) : await getPublicImage(id);
   if (!image) return {};
   return {
     title: image.title || image.original_name,
@@ -59,7 +62,9 @@ interface ExifField {
 
 export default async function ImageDetailPage({ params }: PageProps<"/images/[id]">) {
   const { id } = await params;
-  const image = await getPublicImage(id);
+  const user = await getSessionUser();
+  const isAdmin = await isAdminUser(user);
+  const image = isAdmin ? await getImageDetail(id) : await getPublicImage(id);
   if (!image) notFound();
 
   const externalLink = await getExternalLinkSettings();

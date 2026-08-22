@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/site/site-header";
-import { ThemeScript } from "@/components/site/theme-toggle";
 import { getSiteSettings } from "@/server/queries/settings";
 import { getSessionUser, isAdminUser } from "@/lib/auth";
 
@@ -12,7 +11,6 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex min-h-screen flex-col">
-      <ThemeScript />
       <SiteHeader settings={settings} isAdmin={isAdmin} homepageTemplate={settings.homepageTemplate} />
       <main className="flex-1">{children}</main>
       {settings.homepageTemplate !== "globe" && (
