@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, X, LoaderCircle, Clock, Copy } from "lucide-react";
 import {
   ACCEPTED_MIME,
   MAX_BATCH_SIZE,
@@ -51,6 +52,8 @@ export function MobileUploadPanel({
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [dragOver, setDragOver] = useState(false);
+  const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
+  const allUrlsRef = useRef<Set<string>>(new Set());
   const { dialog, showAlert, closeDialog } = useAlertDialog();
 
   const tokenRef = useRef(initialToken);
@@ -60,6 +63,14 @@ export function MobileUploadPanel({
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const urls = allUrlsRef.current;
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+      urls.clear();
+    };
   }, []);
 
   const secondsLeft = expiresAt ? Math.max(0, Math.round((expiresAt - now) / 1000)) : null;
@@ -126,6 +137,17 @@ export function MobileUploadPanel({
       });
       return next;
     });
+    const newUrls: Record<string, string> = {};
+    for (const f of valid) {
+      if (f.type.startsWith("image/")) {
+        const url = URL.createObjectURL(f);
+        newUrls[keyOf(f)] = url;
+        allUrlsRef.current.add(url);
+      }
+    }
+    if (Object.keys(newUrls).length > 0) {
+      setThumbUrls((prev) => ({ ...prev, ...newUrls }));
+    }
   }
 
   function removeFile(key: string) {
@@ -135,6 +157,24 @@ export function MobileUploadPanel({
       delete next[key];
       return next;
     });
+    setThumbUrls((prev) => {
+      if (prev[key]) {
+        URL.revokeObjectURL(prev[key]);
+        allUrlsRef.current.delete(prev[key]);
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      }
+      return prev;
+    });
+  }
+
+  function clearAll() {
+    for (const url of allUrlsRef.current) URL.revokeObjectURL(url);
+    allUrlsRef.current.clear();
+    setFiles([]);
+    setStatuses({});
+    setThumbUrls({});
   }
 
   async function startUpload() {
@@ -235,11 +275,13 @@ export function MobileUploadPanel({
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">手机上传</h1>
-        {secondsLeft !== null && (
-          <span className={`text-sm tabular-nums ${expired ? "text-red-600" : "opacity-60"}`}>
-            {expired ? "链接已过期" : `${secondsLeft}s 后过期`}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {secondsLeft !== null && (
+            <span className={`text-sm tabular-nums ${expired ? "text-red-600" : "opacity-60"}`}>
+              {expired ? "已过期" : `${secondsLeft}s`}
+            </span>
+          )}
+        </div>
       </div>
 
       {expired && (
@@ -258,18 +300,15 @@ export function MobileUploadPanel({
           addFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
-        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
           dragOver
             ? "border-blue-500 bg-blue-50 dark:bg-blue-950/40"
             : "border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800"
         }`}
       >
-        <p className="text-base font-medium">点击选择手机相册中的图片</p>
-        <p className="text-sm opacity-60">
-          支持 JPG / PNG / WebP / GIF / AVIF / SVG，单张 ≤50MB，批量 ≤{MAX_BATCH_SIZE} 张
-        </p>
-        <p className="text-sm opacity-60">
-          支持自动识别 Google/三星动态照片，Apple 实况照片请同时选择图片和视频
+        <p className="text-base font-medium">点击选择图片</p>
+        <p className="text-xs opacity-60">
+          JPG / PNG / WebP / GIF / AVIF / SVG，单张 ≤50MB
         </p>
         <input
           ref={inputRef}
@@ -282,59 +321,136 @@ export function MobileUploadPanel({
       </div>
 
       {files.length > 0 && (
-        <ul className="flex flex-col gap-1.5 text-sm">
-          {files.map((f) => {
-            const key = keyOf(f);
-            const status = statuses[key];
-            return (
-              <li
-                key={key}
-                className="flex items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2"
-              >
-                <span className="min-w-0 flex-1 truncate">{f.name}</span>
-                <span className="text-xs opacity-50">{(f.size / 1024 / 1024).toFixed(2)}MB</span>
-                {status?.state === "uploading" && (
-                  <div className="h-1.5 w-16 overflow-hidden rounded bg-neutral-200 dark:bg-neutral-800">
-                    <div className="h-full bg-blue-500" style={{ width: `${status.pct}%` }} />
-                  </div>
-                )}
-                <span className="text-xs">
-                  {status?.state === "waiting" && "待上传"}
-                  {status?.state === "signing" && "签名中…"}
-                  {status?.state === "uploading" && `${status.pct}%`}
-                  {status?.state === "completing" && "处理中…"}
-                  {status?.state === "done" && "✅ 完成"}
-                  {status?.state === "duplicate" && "⚠️ 已存在"}
-                  {status?.state === "failed" && (
-                    <span className="text-red-600">
-                      失败{status.error ? `: ${status.error}` : ""}
-                    </span>
-                  )}
-                </span>
-                {status?.state === "waiting" && (
-                  <button
-                    type="button"
-                    onClick={() => removeFile(key)}
-                    className="text-xs opacity-50 hover:opacity-100"
-                  >
-                    移除
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {files.map((f) => {
+              const key = keyOf(f);
+              const status = statuses[key];
+              const url = thumbUrls[key];
+              const pct = status?.pct ?? 0;
+              const blur =
+                status?.state === "done" || status?.state === "duplicate"
+                  ? 0
+                  : status?.state === "uploading"
+                    ? Math.max(0, 12 - (pct / 100) * 12)
+                    : status?.state === "completing"
+                      ? 2
+                      : 12;
 
-      {files.length > 0 && (
-        <button
-          type="button"
-          onClick={startUpload}
-          disabled={busy || expired}
-          className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-        >
-          {busy ? "上传中…" : `开始上传 (${files.length})`}
-        </button>
+              return (
+                <div
+                  key={key}
+                  className="group relative overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
+                >
+                  <div className="aspect-square w-full overflow-hidden">
+                    {url ? (
+                      <img
+                        src={url}
+                        alt={f.name}
+                        className="h-full w-full object-cover transition-[filter] duration-500 ease-out"
+                        style={{ filter: `blur(${blur}px)` }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-2">
+                        <p className="line-clamp-2 text-center text-[10px] opacity-40">{f.name}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {status?.state === "uploading" && (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <LoaderCircle className="h-5 w-5 animate-spin text-white drop-shadow-lg" />
+                        <span className="rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                          {pct}%
+                        </span>
+                      </div>
+                    )}
+                    {status?.state === "completing" && (
+                      <LoaderCircle className="h-5 w-5 animate-spin text-white drop-shadow-lg" />
+                    )}
+                    {status?.state === "done" && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/90 shadow-lg">
+                        <Check className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    {status?.state === "duplicate" && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/90 shadow-lg">
+                        <Copy className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    {status?.state === "failed" && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/90 shadow-lg">
+                        <X className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    {status?.state === "waiting" && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <Clock className="h-3 w-3 text-white/80" />
+                      </div>
+                    )}
+                  </div>
+
+                  {status?.state === "uploading" && (
+                    <div className="absolute inset-x-0 bottom-0 h-1 bg-neutral-200/50 dark:bg-neutral-800/50">
+                      <div
+                        className="h-full bg-blue-500 transition-[width] duration-200 ease-linear"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 pb-1 pt-4">
+                    <p className="truncate text-[10px] font-medium text-white drop-shadow-sm">
+                      {f.name}
+                    </p>
+                  </div>
+
+                  {status?.state === "waiting" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(key);
+                      }}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-red-500 group-hover:opacity-100"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+
+                  {status?.state === "failed" && status.error && (
+                    <div className="absolute inset-x-0 top-1 flex justify-center">
+                      <span className="max-w-[90%] truncate rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] text-white shadow-lg">
+                        {status.error}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={startUpload}
+              disabled={busy || expired}
+              className="flex-1 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
+            >
+              {busy ? "上传中…" : `开始上传 (${files.length})`}
+            </button>
+            {!busy && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm dark:border-neutral-700"
+              >
+                清除
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       <AlertDialog
