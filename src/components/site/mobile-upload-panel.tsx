@@ -9,17 +9,26 @@ import {
 } from "@/lib/images/variants";
 import { AlertDialog, useAlertDialog } from "@/components/shared/alert-dialog";
 
+const CONCURRENCY = 3;
+const RENEW_THRESHOLD_MS = 60_000;
+
 type FileState =
   | { state: "waiting" | "signing" | "completing"; pct: number }
   | { state: "uploading"; pct: number }
   | { state: "done" | "failed" | "duplicate"; pct: number; error?: string };
 
-function uploadWithProgress(url: string, file: File): Promise<void> {
+function uploadWithProgress(
+  url: string,
+  file: File,
+  onProgress: (pct: number) => void,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url);
     xhr.setRequestHeader("Content-Type", file.type);
-    xhr.upload.onprogress = () => {};
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) resolve();
       else reject(new Error(`上传失败 (${xhr.status})`));
@@ -30,8 +39,8 @@ function uploadWithProgress(url: string, file: File): Promise<void> {
 }
 
 export function MobileUploadPanel({
-  token,
-  expiresAt,
+  token: initialToken,
+  expiresAt: initialExpiresAt,
 }: {
   token: string;
   expiresAt: number | null;
@@ -43,6 +52,10 @@ export function MobileUploadPanel({
   const [now, setNow] = useState(() => Date.now());
   const [dragOver, setDragOver] = useState(false);
   const { dialog, showAlert, closeDialog } = useAlertDialog();
+
+  const tokenRef = useRef(initialToken);
+  const expiresAtRef = useRef(initialExpiresAt);
+  const [expiresAt, setExpiresAt] = useState(initialExpiresAt);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -58,6 +71,31 @@ export function MobileUploadPanel({
 
   function keyOf(f: File) {
     return f.name + ":" + f.size;
+  }
+
+  async function renewToken(): Promise<boolean> {
+    try {
+      const res = await fetch("/api/upload/renew-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tokenRef.current }),
+      });
+      if (!res.ok) return false;
+      const data = (await res.json()) as { token: string; expiresAt: number };
+      tokenRef.current = data.token;
+      expiresAtRef.current = data.expiresAt;
+      setExpiresAt(data.expiresAt);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function ensureTokenValid(): Promise<boolean> {
+    if (!expiresAtRef.current) return true;
+    const remaining = expiresAtRef.current - Date.now();
+    if (remaining > RENEW_THRESHOLD_MS) return true;
+    return renewToken();
   }
 
   function addFiles(list: FileList | null) {
@@ -103,12 +141,15 @@ export function MobileUploadPanel({
     if (files.length === 0 || busy || expired) return;
     setBusy(true);
 
-    const headers = { "Content-Type": "application/json", "x-upload-token": token };
+    const headers = () => ({
+      "Content-Type": "application/json",
+      "x-upload-token": tokenRef.current,
+    });
 
     try {
       const presignRes = await fetch("/api/upload/presign", {
         method: "POST",
-        headers,
+        headers: headers(),
         body: JSON.stringify({
           files: files.map((f) => ({ name: f.name, mime: f.type, size: f.size })),
         }),
@@ -122,50 +163,69 @@ export function MobileUploadPanel({
         files: Array<{ name: string; key: string; url: string }>;
       };
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const sig = signed[i];
-        const key = keyOf(file);
-        if (!sig) {
-          setStatus(key, { state: "failed", pct: 0, error: "未获取到签名" });
-          continue;
-        }
-        try {
-          setStatus(key, { state: "uploading", pct: 5 });
-          await uploadWithProgress(sig.url, file);
-          setStatus(key, { state: "completing", pct: 100 });
+      let nextIndex = 0;
 
-          const completeRes = await fetch("/api/upload/complete", {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              key: sig.key,
-              originalName: file.name,
-              mime: file.type,
-              size: file.size,
-            }),
-          });
-          const result = (await completeRes.json().catch(() => null)) as {
-            duplicate?: boolean;
-            error?: string;
-          } | null;
-          if (!completeRes.ok) {
+      async function worker() {
+        while (nextIndex < files.length) {
+          const i = nextIndex++;
+          const file = files[i];
+          const sig = signed[i];
+          const key = keyOf(file);
+          if (!sig) {
+            setStatus(key, { state: "failed", pct: 0, error: "未获取到签名" });
+            continue;
+          }
+          try {
+            const tokenOk = await ensureTokenValid();
+            if (!tokenOk) {
+              setStatus(key, { state: "failed", pct: 0, error: "token续期失败" });
+              continue;
+            }
+
+            setStatus(key, { state: "uploading", pct: 5 });
+            await uploadWithProgress(sig.url, file, (pct) => {
+              setStatus(key, { state: "uploading", pct: Math.max(5, pct) });
+            });
+            setStatus(key, { state: "completing", pct: 100 });
+
+            const completeRes = await fetch("/api/upload/complete", {
+              method: "POST",
+              headers: headers(),
+              body: JSON.stringify({
+                key: sig.key,
+                originalName: file.name,
+                mime: file.type,
+                size: file.size,
+              }),
+            });
+            const result = (await completeRes.json().catch(() => null)) as {
+              duplicate?: boolean;
+              error?: string;
+            } | null;
+            if (!completeRes.ok) {
+              setStatus(key, {
+                state: "failed",
+                pct: 100,
+                error: result?.error ?? "回调失败",
+              });
+              continue;
+            }
+            setStatus(key, { state: result?.duplicate ? "duplicate" : "done", pct: 100 });
+          } catch (error) {
             setStatus(key, {
               state: "failed",
               pct: 100,
-              error: result?.error ?? "回调失败",
+              error: (error as Error).message,
             });
-            continue;
           }
-          setStatus(key, { state: result?.duplicate ? "duplicate" : "done", pct: 100 });
-        } catch (error) {
-          setStatus(key, {
-            state: "failed",
-            pct: 100,
-            error: (error as Error).message,
-          });
         }
       }
+
+      const workers = Array.from(
+        { length: Math.min(CONCURRENCY, files.length) },
+        () => worker(),
+      );
+      await Promise.all(workers);
     } finally {
       setBusy(false);
     }
